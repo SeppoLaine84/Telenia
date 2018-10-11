@@ -1,7 +1,7 @@
 {
-  "name": "Myyntipro",
-  "version": "0.0.1",
-  "description": "my first socket.io app",
+  "name": "Telenia",
+  "version": "1.8",
+  "description": "TeleniaAPP",
   "dependencies": {
     "async": "~2.0.0-rc.4",
     "body-parser": "^1.14.0",
@@ -11,7 +11,6 @@
     "embedly": "^1.0.4",
     "express": "^4.10.2",
     "jade": "^1.11.0",
-    "jquery": "^2.1.4",
     "moment": "^2.10.6",
     "mongo-express": "^0.21.0",
     "mongodb": "^2.0.43",
