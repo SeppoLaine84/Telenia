@@ -1,0 +1,23 @@
+extends layout-public
+block content
+	#customerPage.container
+		#pageBody
+			.jumbotron
+				.row
+					.col-xs-12.col-md-6
+						h1#ylaotsikko(class='#{cPage.customizations.title.class}' data-dbKey='title' data-dbSubKey='text')= cPage.customizations.title.text
+						h3.text-bold#alaotsikko(class='#{cPage.customizations.footer.class}' data-dbKey='footer' data-dbSubKey='text')= cPage.customizations.footer.text
+						p#help(class='#{cPage.customizations.help.class}' data-dbKey="help" data-dbSubKey='text')= cPage.customizations.help.text
+					.col-xs-12.col-md-6
+						.ibox-content
+							form.m-t(class="m-t" role="form")
+								legend#form(class='#{cPage.customizations.help.class}' data-keyFromID="true" data-dbKey="legend" data-dbSubKey='text')= cPage.customizations.form.legend.text
+												
+								each key in cPage.meta.campaign.keys
+									if(key.enabled === true)
+										- var k = key.name.replace(' ','_');
+																		
+										.form-group
+											input.form-control(name="cKey-#{k}" type='#{key.type}' placeholder="#{key.name}") 
+								.form-group
+									.btn.btn-primary.block.full-widt.m-b(type="submit") Lähetä

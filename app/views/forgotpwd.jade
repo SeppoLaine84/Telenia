@@ -1,0 +1,25 @@
+extends loginLayout
+block login
+	.row: .col-xs-12.loading.hidden.text-center
+		h1 
+			i.fa.fa-spinner.fa-pulse.fa-fw(style="color:#3091A7;margin-right:1em")
+			strong(style='color:white') Kirjaudutaan sisään...		
+	.middle-box.text-center.loginscreen.animated.fadeInDown
+		div
+			div
+				img.img-responsive.pull-left.login-logo.animated.fadeInUp(src="/images/logo_iso.png")
+				.clearfix
+
+	.middle-box.animated.fadeInDown
+		h2.font-bold SALASANAN PALAUTTAMINEN
+			br
+			small Kirjoita alle sähköpostiosoitteesi, niin saat sähköpostitse ohjeet uuden salasanan luontia varten
+		form#login-form.m-t( action='/user/sendresetpwd' method="POST")
+			.form-group
+				input.form-control(type='email',name="email", placeholder='Sähköpostiosoiteesi', required='')
+			button.btn.btn-primary.block.full-width.m-b(type='submit') Lähetä
+				
+		p.m-t.text-center
+			small
+				a(href="http://www.codalia.fi" target="_blank") Codalia
+				|  © 2016

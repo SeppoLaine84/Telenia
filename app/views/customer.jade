@@ -1,0 +1,85 @@
+h1 Asiakkaat
+button.btn.green.create-customer
+	.fa.fa-plus
+	|	 Lisää uusi asiakas
+
+hr
+ul#customers.users.tree
+	div.no-items
+		h3.warning Ei asiakkaita
+	li.new-customer(style='display:none')
+		button.expand.open
+			span
+		h3.customer-name Uusi asiakas
+			small.not-saved  (Ei tallennettu)
+		form#customer-details.details.row(style='display:block')
+			.col-lg-6
+				input#cid(type="hidden")
+				h4 Yhteystiedot
+				label(for='nimi') Yrityksen nimi
+				input#customer-name.form-control(type='text', name='nimi')
+				label(for='vat') Y-tunnus
+				input#customer-vat.form-control(type='text', name='vat')
+				label(for='yhteystiedot.nimi') Yhteyshenkilön nimi
+				input.form-control(type='text', name='yhteystiedot.nimi')
+				label(for='yhteystiedot.puhelin') Puhelin
+				input.form-control(type='tel', name='yhteystiedot.puhelin')
+				label(for='yhteystiedot.osoite.katu') Katuosoite
+				input.form-control(type='text', name='yhteystiedot.osoite.katu')
+				label(for='yhteystiedot.osoite.postinro') Postinumero
+				input.form-control(type='tel', name='yhteystiedot.osoite.postinro')
+				label(for='yhteystiedot.osoite.kunta') Postitoimipaikka
+				input.form-control(type='text', name='yhteystiedot.osoite.kunta')
+			.col-lg-6
+				h4 Kirjautumistiedot
+				label(for='yhteystiedot.email') Sähköposti
+				input.form-control(type='email', name='yhteystiedot.email', placeholder='matti@matti.fi')
+				label(for='pwd') Salasana
+				input.form-control(type='password', name='pwd')
+				label(for='subDomain')
+					| Kirjautumis-alidomain: 
+					strong xxx
+					| .myyntipro.fi [a-z]
+				input.form-control(type='text', name='subDomain')
+				hr
+				button.submit.add-customer
+					i.fa.fa-pencil
+					|  Tallenna asiakas
+				hr
+				button.submit.red.remove-customer
+					i.fa.fa-trash
+					|  Poista asiakas
+	if(customers)
+		for customer in customers
+			include blocks/customer
+						
+script.
+
+	
+	function updateNoItemsText(element) {
+		if($(element + " .customer").length == 0)
+			$(element+ " .no-items").show();
+		else 
+			$(element+ " .no-items").hide();
+	}
+	
+	$("ul#customers").off("change").on("change", function(){
+		updateNoItemsText("ul#customers");
+
+	});
+	updateNoItemsText("ul#customers");
+	$(".create-customer").off("click").on("click", function(){
+		var $customer = $(".new-customer").clone();
+		$customer.removeClass("new-customer");
+		$customer.addClass("customer");
+			
+		
+		$customer.prependTo($("ul#customers"));
+		updateNoItemsText("ul#customers");
+		$customer.slideDown(animationOptions.slideSpeed, function(){
+			$(window).scrollTo($customer, animationOptions.scrollSpeed);
+		});
+	});
+	
+	
+	

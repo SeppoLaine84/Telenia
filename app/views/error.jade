@@ -1,0 +1,12 @@
+extends errorLayout
+block error
+	.middle-box.text-center.errorscreen.animated.fadeInDown
+		#errors.m-t
+			h1.text-center 
+				i.fa.fa-info.text-danger
+			h2.errori(style="margin-bottom:10px;color:red")= errorMsg
+					
+		p.m-t
+			small
+				a(href="javascript:history.back();") Takaisin
+				

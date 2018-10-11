@@ -1,0 +1,114 @@
+extends layout
+block content
+	#page-wrapper.gray-bg.dashboard-1
+			.row.border-bottom
+				nav.navbar.navbar-static-top: .navbar-header
+					h1(style='margin-bottom:20px;margin-left:10px' )
+						i.fa.fa-spinner.fa-pulse.fa-fw.page-title-icon
+						span.page-title= loadingText
+				
+			.row.border-bottom.white-bg.dashboard-header
+			
+				#widget-place-0.col-xs-12.col-sm-12.col-md-4.col-lg-3
+					
+				#widget-place-1.col-xs-12.col-md-8.col-lg-6
+				#widget-place-2.col-xs-12.col-md-8.col-lg-3
+					
+						
+			
+			.row: .col-lg-12
+				.wrapper.wrapper-content: .row
+					#widget-place-3.col-xs-12.col-sm-12.col-md-6.col-lg-4
+						
+					#widget-place-4.col-sm-9.col-lg-8
+						
+					#widget-place-5.col-sm-9.col-lg-8
+						
+			#widget-holder
+				include widgets/stat-list
+				if(user.uiOptions.etusivu.widgets.weeklyChart.show == 1)
+					include report/charts/weeklyChart
+				if(user.userlevel > 1 && user.uiOptions.etusivu.widgets.kuittausFeed.show == 1)
+					include widgets/kuittaus-feed
+				if(user.userlevel > 1 && user.uiOptions.etusivu.widgets.weeklyUserChart.show == 1)
+					include report/charts/weeklyUserChart
+				if(user.uiOptions.etusivu.widgets.timespanChart.show == 1)
+					include report/charts/timespanChart
+				if(user.uiOptions.etusivu.widgets.callProgressPie.show == 1)
+					include report/charts/callProgressPie
+block content-scripts
+	include report/chart-script
+block widget-scripts
+	script.
+		
+		var uiOptions = !{JSON.stringify(user.uiOptions.etusivu)}
+		
+		Object.keys(uiOptions.widgets).forEach(function(_widget){
+			var widget = uiOptions.widgets[_widget];
+			if(widget.show == 1){
+				var $elem = $("#"+_widget+"Widget");
+				if(widget.position < 2){
+					$elem.find(".ibox").removeClass("ibox float-e-margins").addClass("row")
+					var $row = $("<div class='col-xs-12'></div>");
+					
+					$elem.find(".ibox-content").css("border", "0").wrap($row);
+					$elem.find(".ibox-title").removeClass("ibox-title")
+				}
+				$elem.appendTo($("#widget-place-"+widget.position)).removeClass("hidden").addClass("animated")
+				
+			}
+			
+		});
+		
+		
+		IOclient.on('joined', function(){
+			IOclient.emit('req.user.sales.widget');
+			IOclient.emit("req.client.kuittaus.feed");
+			var $activityList = $(".feed-activity-list");
+			$activityList.find(".feed-element").not(".template").remove()
+			$("#kuittausFeedWidget .loading").fadeIn('fast');
+		});
+	
+		IOclient.on("kuittaus.send", function(data){
+		
+			$("#kuittausFeedWidget .loading").fadeOut('fast');
+			var $activityList = $(".feed-activity-list");
+			if(data.clearElement == true){
+				$activityList.find(".feed-element").not(".template").remove()
+			}
+			var kuittaukset = _.sortBy(data.kuittaukset, "aika")
+			kuittaukset.forEach(function(_data){
+				var $element = $(".feed-element.template").clone()
+				$element.prependTo($activityList);
+				$element.find(".ball").addClass("bg-"+_data.status.toLowerCase())
+				$element.find(".status-text").text(_data.status)
+				$element.find(".userName").text(_data.userName)
+				$element.find(".payloadData").text(" "+_data.payloadName)
+				$element.find(".aikaDiff").text(moment(_data.aika).locale("fi").fromNow(moment())+" sitten")
+				$element.find(".aika").text(moment(_data.aika).locale("fi").calendar().capitalizeFirstLetter())
+				$element.removeClass("hidden template").addClass("fadeInDown")
+						
+				var count = $activityList.find(".feed-element").not(".template").length;
+				
+				if(count > 5){
+					var $item = $activityList.find(".feed-element").not(".template").last()
+				
+					$item.fadeOut("fast", function(){
+						$(this).remove()
+					});
+				}
+			});
+			
+			
+		});
+		
+		IOclient.on('user.sales.widget', function(data){
+			
+			$("#ok-status-widget .count").text(data.newCount);
+			$("#ok-status-widget .lastCount").text(data.newCount - data.oldCount);
+			$("#unregistered-statuses-widget .count").text(data.unregisteredCount)
+			$("#total-status-widget .count").text(data.totalCount)
+			
+		});
+				
+		updateNotifyCounter();

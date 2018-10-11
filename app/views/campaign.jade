@@ -1,0 +1,20 @@
+h1 Kampanjat
+ul.camp-list.new-camp
+	include blocks/campaign-create
+	li.no-item.hidden
+		h4 Ei kampanjoita
+	span.campaing-content
+include blocks/campaign-list
+script.
+	updateCampaingList(false, function(){
+	
+		
+		$(".camp-list .campaign").find(".tablesorter").tablesorter({
+			headers:{
+				4: {sorter:false},
+				0: {sorter:false}
+			},
+			sortList: [[1,0]],
+		});
+		
+	});

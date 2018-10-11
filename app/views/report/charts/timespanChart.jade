@@ -1,0 +1,22 @@
+if(page == "etusivu")
+	.chartWidget.widgetti#timespanChartWidget.hidden.fadeInDown
+		.ibox.float-e-margins
+			.ibox-content
+				div
+					canvas#timespanChart(height="200")
+else 
+	.col-lg-6.animated.fadeInLeft.widgetti
+		.ibox-title
+			h5 Myynnit ajankohdan mukaan
+			form.ibox-tools: small
+				.form-group
+					label.control-label(style='margin-right:.5em;') Näytä etusivulla
+					.checkbox.checkbox-inline.checkbox-info
+						if(user.uiOptions.etusivu.widgets.timespanChart.show === 1)
+							input#showWeekyUserChart.showWidget(type='checkbox' name='uiOptions.etusivu.widgets.timespanChart.show' checked)
+						else
+							input#showWeekyUserChart.showWidget(type='checkbox' name='uiOptions.etusivu.widgets.timespanChart.show')
+						label
+		.ibox-content
+			div
+				canvas#timespanChart(height="200")

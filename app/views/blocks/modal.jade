@@ -1,0 +1,12 @@
+#myModal.modal.fade(role="dialog"  data-keyboard="false"  data-backdrop="static" )
+	.modal-dialog(style="width:25%")
+		.modal-content
+			.modal-header
+				button.btn.btn-danger.btn-sm.pull-right.close(type="button" data-dismiss="modal")
+					i.fa.fa-times
+				h1.modal-title Otsikko
+			.modal-body
+				p. content
+			.modal-footer
+				button.btn.btn-primary.cancel-btn(type="button" data-dismiss="modal") Sulje
+				button.btn.btn-success.ok-btn(type="button" data-dismiss="modal") Hyväksy

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <title>Telenia</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" href="/favicon.ico?v=1.2">
+    <link href='//fonts.googleapis.com/css?family=Open+Sans:300,400,700' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" href="/css/bootstrap.min.css">
+	<link rel="stylesheet" href="/css/inspinia.css">
+	<link rel="stylesheet" href="/css/landing.css">
+	<link rel="stylesheet" href="/css/animate.css" />
+    <link rel="stylesheet" href="/css/plugins/sweetalert/sweetalert.css" />
+	<link rel="stylesheet" href="/css/landing/login.css">
+    <script src="https://use.fontawesome.com/f039dac527.js"></script>
+
+    <!--[if lt IE 9]>
+        <script src="js/html5shiv.js"></script>
+        <script src="js/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+<div id="nav-container">
+    <a href="/"><img src="/images/telenia-invert.png" alt="Telenia" /></a>
+    <nav id="main-nav">
+        <ul>
+			<li><a href="javascript:void(0);">Ota yhteyttä ja kokeile!</a></li>
+            <li><a href="#" data-toggle="modal" data-target="#loginModal" class="login"><i class="fa fa-lock"></i> Kirjaudu sisään</a></li>
+        </ul>
+    </nav>
+</div>
+
+<!-- 	MODAL LOGIN -->
+<div class="modal inmodal " id="loginModal" tabindex="-1" role="dialog" aria-hidden="true" style="display: none;">
+	<div class="modal-dialog modal-sm">
+		<div class="modal-content animated fadeInDown">
+			<div class="modal-header">
+				<div class="modal-title">		
+					<img src="/images/telenia-invert.png" alt="Telenia" class='pull-left' />
+					<span class='pull-left'>KIRJAUDU SISÄÄN</span>
+				</div>
+			</div>
+			<div class="modal-body">
+				<form id="login-form" action='/user/login' method="POST">
+					<div class="form-group"><label>Sähköpostiosoite</label> <input type="text" name="email" placeholder="Sähköpostiosoite" class="form-control"></div>
+					<div class="form-group"><label>Salasana</label> <input type="password" name="pwd" placeholder="Salasana" class="form-control"></div>
+				</form>
+				<div class="errors">
+					<p class='error'></p>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button class='btn btn-link pull-left' href='/forgotpwd'>Unohtuiko salasana?</a> 
+				<button type="button" class="btn btn-white" data-dismiss="modal">Sulje</button>
+				<button type="submit" form="login-form" class="btn btn-primary">Kirjaudu</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Main stuff -->
+<main id="content-page">
+    <div class="container">
+        <div class="row">
+			<div class='col-sm-6'>
+				<h1  class='big'>Kokeile Teleniaa itse!</h1>
+				<p>
+					Ilmainen 30 päivän kokeilujakso sisältää kaiken mitä sinä ja myyntiryhmäsi tarvitsee tehokkaaseen kontaktointiin.
+					<br/><br/>
+					Koekäyttö sisältää myös veloituksettoman tukipalvelun.
+				</p>
+			 </div>
+			 
+            <div class="col-sm-6">
+               <h2 class='big'>Pääse vaikuttamaan</h2>
+                <p>Telenia on vielä beta-testauksessa mutta se kuitenkin sisältää valtaosan toiminnallisuudesta jo nyt.</p>
+            </div>
+            <div class="col-sm-6">
+				<p>Sinulla on myös mahdollisuus päästä vaikuttamaan kehitysideoiden merkeissä jotta saisimme palvelusta vieläkin paremman!</p>
+				
+            </div>
+        </div>
+		 <hr />
+		<div class="row">
+			<div class="col-sm-12 text-center">
+				<p >
+					<small>
+						<a class="scrollTo" href="#contact-form">Täytä</a> alla oleva yhteydenottolomake jos haluat aloittaa kokeilujakson.<br/>
+						Tarvittavat tiedot täytettyäsi lähetämme sinulle jonkin ajan kuluessa sähköpostissa käyttäjätunnuksen ja toimintaohjeet jatkoa varten.
+					</small>
+				</p>
+				<p><small>Voit myös ottaa meihin suoraan yhteyttä sähköpostitse osoitteeseen 
+					<a href="mailto:info@codalia.fi">info@codalia.fi</a> tai soittamalla numeroon 
+					<a href="tel:+358207418807">020 741 8807</a>
+				</small></p>
+				 <p><small>Tukipalvelumme: <a href="mailto:helpdesk@codalia.fi">helpdesk@codalia.fi</a></small></p>
+			</div>
+		</div>
+        <hr />
+        <form id="contact-form" class="row" action="/contact/send" method="POST">
+            <div class="col-sm-6">
+                <h2>Yrityksen tiedot</h2>
+				<div class="form-group">
+					<label for="ynimi"><strong>*</strong> Yrityksen nimi</label>
+					<input type="text" class="form-control validate" data-minLength="2" data-prefix="Yrityksen nimessä" data-affic="kirjainta"  name="ynimi" id="ynimi"  />
+				</div>
+				
+				<div class="form-group">
+					<label for="ytunnus"><strong>*</strong> Y-tunnus</label>
+					<input type="tel" data-minLength="9" data-maxlength="9" data-validationType="vat" data-prefix="Y-tunnuksen" data-affix="merkkiä" class="form-control validate" name="ytunnus" id="ytunnus" />
+				</div>
+				
+				<div class="form-group">
+					<label for="katuos">Katuosoite</label>
+					<input type="text" class="form-control" name="katuos" id="katuos" />
+				</div>
+				<div class="form-group">
+					<label for="postinum">Postinumero</label>
+					<input type="text" class="form-control validate" data-validationType="exactLength" data-notRequired="true" data-exactLength="5" data-prefix="Postinumerossa" data-affix="numeroa" name="postinum" id="postinum" />
+				</div>
+				
+				<div class="form-group">
+					<label for="paikka">Postitoimipaikka</label>
+					<input type="text" class="form-control" name="paikka" id="paikka" />
+				</div>
+            </div>
+            <div class="col-sm-6">
+                <h2>Yhteyshenkilön tiedot</h2>
+				<div class="form-group">
+					<label for="nimi"><strong>*</strong> Yhteyshenkilön nimi</label>
+					<input type="text" class="form-control validate" data-prefix="Yhteyshenkilön nimessä" data-affix="kirjainta" name="nimi" id="nimi" />
+					
+				</div>
+				<div class="form-group">
+					<label for="titteli">Titteli</label>
+					<input type="text" class="form-control" name="titteli" id="titteli" />
+				</div>
+                <div class="form-group">
+					<label for="puh"><strong>*</strong> Puhelinnumero</label>
+					<input type="tel" class="form-control validate" data-validationType="phone" name="puh" data-prefix="Puhelinnumero" data-affix="numeroa" id="puh" />
+				</div>
+				<div class="form-group">
+					<label for="sposti"><strong>*</strong> Sähköpostiosoite</label>
+					<input type="text" data-validationType="email" class="form-control validate" name="sposti" id="sposti" />
+				</div>
+            </div>
+            <div class="col-xs-12">
+                <hr />
+                <input type="submit" id="form-submit" value="Lähetä lomake">
+            </div>
+        </form>
+    </div>
+</main>
+<footer><a href="http://www.codalia.fi"><img src="/images/codalia.png" alt="Codalia" /></a></footer>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="/js/fastclick.min.js"></script>
+<script src="/js/jquery.scrollTo.min.js"></script>
+<script src="/js/plugins/underscore/underscore.min.js"></script>
+<script src="/js/plugins/jqForm/jqForm.min.js"></script>
+<script src="/js/plugins/sweetalert/sweetalert.min.js"></script>
+<script src="/js/login-script.min.js"></script>
+<script src="/js/contact-validator.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+    FastClick.attach(document.body);
+	$(".scrollTo").on("click",function(e){e.preventDefault();var t=$(this).attr("href");$(window).scrollTo($(t),300,{offset:{top:-60}});});
+	$(".btn-link").on("click",function(){document.location = $(this).attr("href");});
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+extends ../layout
+block content
+	main: .container-fluid
+		.row: .col-xs-12.col-sm-10.col-md-8.col-lg-4.col-sm-offset-1.col-md-offset-2.col-lg-offset-4
+			div(style="position:relative;display:block;height:112px;width:100%;background: #f3f3f3 url('/images/logo.png') no-repeat center center")
+			section.text-center(style="padding:10px 60px;")
+				h3 <strong>Rekisteröityminen onnistui!</strong>
+				a(href="/") KIRJAUDU
+					
+	include ../scripts

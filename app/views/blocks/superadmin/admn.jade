@@ -1,0 +1,8 @@
+include companys
+#usrs
+
+script.
+	$.get('/superadmin/users/', function(html){
+		
+		$("#usrs").html(html);
+	});

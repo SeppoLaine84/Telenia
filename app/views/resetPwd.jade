@@ -1,0 +1,43 @@
+extends loginLayout
+block login
+	.row: .col-xs-12.loading.hidden.text-center
+		h1 
+			i.fa.fa-spinner.fa-pulse.fa-fw(style="color:#3091A7;margin-right:1em")
+			strong(style='color:white') Kirjaudutaan sisään...		
+	.middle-box.text-center.loginscreen.animated.fadeInDown
+		div
+			div
+				img.img-responsive.pull-left.login-logo.animated.fadeInUp(src="/images/logo_iso.png")
+				.clearfix
+
+	.middle-box.animated.fadeInDown
+		h2.font-bold SALASANAN PALAUTTAMINEN
+			br
+			small Kirjoita alle uusi salasanasi
+		form#form.m-t( action='/user/new/pass' method="POST")
+			input(type="hidden" name="id" value="#{u._id}")
+			input(type="hidden" name="hash" value="#{hash}")
+			.form-group
+				input.form-control(type='password',name="pwd", placeholder='Uusi salasanasi', required='')
+			.form-group
+				input.form-control(type='password',name="pwdagain", placeholder='Salasana uudestaan', required='')
+			button#submitChange.btn.btn-primary.block.full-width.m-b(type='submit') Vaihda salasana
+			p.error.text-danger.text-center
+		p.m-t.text-center
+			small
+				a(href="http://www.codalia.fi" target="_blank") Codalia
+				|  © 2016
+block content-scripts
+	script.
+		$("#form").on("submit", function(e){
+		
+			if($("input[name='pwd']").val() == $("input[name='pwdagain']").val()){
+				
+				
+			}
+			else {
+				$("p.error").text("Salasanat eivät täsmää!")
+				e.preventDefault();
+			}
+			
+		});

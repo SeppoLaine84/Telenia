@@ -1,0 +1,501 @@
+extends layout
+
+block content
+	#page-wrapper.gray-bg
+		.row.wrapper.border-bottom.white-bg.page-heading
+			h1
+				i.fa.fa-spinner.fa-pulse.fa-fw.page-title-icon
+				span.page-title= loadingText
+						
+		.wrapper-content
+			.row
+				#main-content.col-xs-12.gray-bg
+					.row
+						.col-xs-12.animated.bounceInRight
+							.ibox
+								.ibox-content
+									ul#reports.list-unstyled
+										.toolbar-container.no-print
+											include report/tools/toolbar
+										h4.selectedUser(style='margin-top:10px')
+										if(type == "campaign")
+											include report/campaign
+										else if(type == "day")
+											include report/day
+										else if(type == "general")
+											include report/general
+										
+block content-scripts
+	link(href="/css/plugins/select2/select2.min.css" rel="stylesheet")
+	script(src="/js/plugins/select2/select2.full.min.js")
+	script(src="/js/jQuery.print.js")
+	script.
+		$(document).ready(function(){
+		$("#printReport").on("click", function(){
+			$("#reports").print({
+				globalStyles: true,
+				mediaPrint: false,
+				stylesheet: null,
+				noPrintSelector: ".no-print",
+				iframe: false,
+				append: null,
+				prepend: null,
+				manuallyCopyFormValues: true,
+				//deferred: $.Deferred(),
+				timeout: 250,
+				title: "Raportti",
+				doctype: '<!doctype html>'
+			});
+		});
+		});
+		var rangeDays = {
+				'Muokattu': [moment().startOf("month"), moment().endOf("day")],
+				'Tänään': [moment().startOf("day"), moment().endOf("day")],
+				'Eilen': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+				'Viimeiset 7 päivää': [moment().subtract(6, 'days').startOf("day"), moment()],
+				'Viimeiset 30 päivää': [moment().subtract(29, 'days').startOf("day"), moment()],
+				'Tämä kuukausi': [moment().startOf('month'), moment().endOf('day')],
+				'Edellinen kuukausi': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+		}
+		
+		for(label in rangeDays) {
+			if(label == "Muokattu"){
+				$(".predefinedDays ul.nav").append($("<li role='presentation' data-label='"+label+"' class='tab' data-start='"+rangeDays[label][0]+"' data-end='"+rangeDays[label][1]+"' ><a href='#'>"+label+"</a></li>"))
+			}
+			else 
+				$(".predefinedDays ul.nav").append($("<li role='presentation' data-label='"+label+"' class='tab' data-start='"+rangeDays[label][0]+"' data-end='"+rangeDays[label][1]+"' ><a href='#'>"+label+"</a></li>"))
+		}
+		$(".predefinedDays li").first().next().addClass("active");
+				
+
+		
+		var origStart 		= rangeDays['Tänään'][0];
+		var origEnd			= rangeDays['Tänään'][1];
+		var reportType 		= "#{type}";
+		var hours 			= 0;
+		var money 			= 0;
+		var selectedUser 	= "*";
+		
+		console.log(reportType)
+				
+		// Varmasti on joku hianompi viritys olemassa?!
+		function calculateTotalsInTable($table, cb) {
+			hours = 0.00;
+			money = 0.00;
+			$table.find(".body-content tr").toArray().forEach(function(row){
+				$(row).find("td.calculate").toArray().forEach(function(cell){
+				
+					var c = cell.className.split(/\s+/)[0];
+				
+					if(c == "hours"){
+						var h = parseFloat($(cell).text()).toFixed(2);
+						
+						if(h > 0){
+							
+							hours += Number(h);
+						
+						}
+					}
+				
+					else {
+						
+						$table.find(".body-total ."+c).text(parseFloat(parseFloat($table.find(".body-total ."+c).text())+parseFloat($(cell).text())).toFixed(2))
+					}
+					
+				});
+	
+			})
+				
+			$table.find(".body-total .hours").text(parseFloat(hours).toFixed(2))
+	
+			if(cb)cb();
+		}
+		
+		function calculatePowersInTable($table, cb){
+			var totalContacts = parseInt($table.find(".body-total .calls.value").text());
+			$table.find(".body-total td.value").toArray().forEach(function(v){
+				var classList 	= v.className.split(/\s+/);
+				var val 		= parseFloat($(v).text());
+				
+				classList.forEach(function(c){
+					if(c != "value") {
+					
+						var v = parseFloat($table.find(".body-total ."+c).text());
+										
+						var type = $table.find(".body-power ."+c).data("type")
+											
+						switch(type) {
+							case '%':
+								var _val = parseFloat(val / totalContacts * 100).toFixed(2);
+								
+								if(!isNaN(_val)){
+									$table.find(".body-power ."+c).text(_val + " " + type)	
+							
+								} 
+								
+								
+							break;
+							case 'h':
+								if(val > 0){
+									var _val = parseFloat(  val / hours ).toFixed(2)
+									if(!isNaN(_val))
+										$table.find(".body-power ."+c).text(_val + "/h")
+								}
+									
+								else 
+									$table.find(".body-power ."+c).text("0.00/h")
+							break;
+							case 'e':
+								var calls 	= parseInt($table.find(".body-total .calls").text());
+								var _val 	= parseFloat(  val  / calls ).toFixed(2);
+								if(!isNaN(_val))
+									$table.find(".body-power ."+c).text(_val + "/h")
+							break;
+							default:
+								
+							break;
+						}
+					}
+					
+				});
+				
+			})
+			if(cb)cb();
+		
+		}
+		
+		$(".tab").off("click").on("click", function(e){
+			e.preventDefault();
+			if(!$(this).hasClass("active")){
+				
+				$(".tab").removeClass("active");
+				$(this).addClass("active");
+				
+				
+				var data = $(this).data();
+				if(data.label == "Muokattu"){
+					$("#report-range .table").not(".template").remove();
+					$("input[name='daterange']").removeClass("hidden").css({"display":"inline-block"})
+				}
+				else {
+					$("input[name='daterange']").addClass("hidden")
+					origStart 	= moment(data.start);
+					origEnd		= moment(data.end);	
+			
+					addRange(label, false, function(){
+						$("#report-range .table").not(".template").slideDown(function(){
+											
+						})
+					})
+				}
+			}
+			
+			
+		})
+		
+		var addRange = function(label,slide, cb) {
+			
+				var days = Math.abs(origStart.diff(origEnd, 'days'))+1;
+				var opts = {
+					type:		"range",
+					db:			"campaign",
+					start:		origStart.startOf("day").format("X"),
+					end:		origEnd.endOf("day").format("X"),
+					days: 		days,
+					reportType: reportType,
+				};
+				
+				var $t 		= $("#report-range .table").not(".template");
+				var left 	= $t.length;
+				
+				if(left > 0){
+				
+					$t.slideUp(function(){
+					 
+						left--
+						
+						if(left == 0){
+							$("#report-range .loading").fadeIn('fast', function(){
+				
+								$("#report-range .date-label").text(label);
+								$("#report-range .changeLink .hidden").removeClass("hidden");
+								$("#report-range .start").text(origStart.format("DD.MM.YYYY"))
+								$("#report-range .end").text(origEnd.format("DD.MM.YYYY"))
+														
+								$t.remove();
+
+								fetchRangeData(opts, true, function(){
+									$("#report-range .loading").hide()
+								});
+							});
+						}
+					});
+				}		
+				else {
+					
+					$("#report-range .date-label").text(label);
+					$("#report-range .start").text(origStart.format("DD.MM.YYYY"))
+					$("#report-range .end").text(origEnd.format("DD.MM.YYYY"))
+					$("#report-range .table").not(".template").remove();
+					
+					fetchRangeData(opts, true, function(){
+						$("#report-range .loading").hide()
+					});
+					
+				}	
+
+		}
+		
+		var reportXHR;
+		function fetchRangeData(opts, slide, cb){
+			var totalTables = 0;
+			if(reportXHR){
+				reportXHR.abort();
+			}
+			reportXHR = $.ajax({
+					type:"POST",
+					url:"/report/get",
+					data:opts, 
+					dataType:"json",
+					success: function(report){
+						
+						for(key in report) {
+
+							if(report[key].reports.length > 0){
+								
+								totalTables++;
+								var $table =  $("#report-range .table.template").clone();
+								$table.removeClass("template");
+								$table.attr("id", "report-"+report[key].reports[0][0].kampanjaID)
+								
+								if(key != "all")
+									$table.find(".campaign-nimi").text(key);
+								else 
+									$table.find(".campaign-nimi").text("Päivä");
+								
+								var start = moment(origStart);
+								
+								$table.appendTo($("#report-range .details"));
+							
+								for(var d = 0; d < opts.days; d++) {
+								
+									var $row = $table.find(".table-row.template").clone();
+									if(d != 0)
+										var date = start.add(1, "days").format("DD.MM.YYYY");
+									else
+										var date = start.format("DD.MM.YYYY")
+									
+									$row.attr("id", "day-"+d)
+									
+									$row.removeClass("template");
+								
+									$row.attr("data-aikashort", date.toString());
+									$row.find(".pvm").text(date)
+									
+									$table.find("tbody.body-content").prepend($row.removeClass("hidden"));
+									
+									if(selectedUser == "*"){
+										
+										$row.removeClass("hidden")
+									}
+									else if(selectedUser == report[key].reports[0][0].userID){
+										
+										$row.removeClass("hidden")
+									}
+									else {
+										$row.addClass("filtered");
+									}
+									
+								}
+									
+								report[key].reports.forEach(function(repo){
+									
+									if(repo.length > 0){
+										
+										repo.forEach(function(entry){
+										
+											$row = $table.find('.table-row[data-aikashort="'+entry.aikaShort+'"]').not(".filtered");		
+											if($row.length > 0){
+												var totalStatuses = 0;
+												
+												for(status in entry.statuses) {
+													if(parseInt(entry.statuses[status]) != "NaN")
+														totalStatuses += parseInt(entry.statuses[status]);
+												
+												}
+								
+												$row.find(".status-ok").text(parseInt($row.find(".status-ok").text())+parseInt(entry.statuses.ok));
+												$row.find(".status-ev").text(parseInt($row.find(".status-ev").text())+parseInt(entry.statuses.ev));
+												$row.find(".status-su").text(parseInt($row.find(".status-su").text())+parseInt(entry.statuses.su));
+												$row.find(".status-ei").text(parseInt($row.find(".status-ei").text())+parseInt(entry.statuses.ei));
+												$row.find(".status-tj").text(parseInt($row.find(".status-tj").text())+parseInt(entry.statuses.tj));
+												$row.find(".status-v").text(parseInt($row.find(".status-v").text())+parseInt(entry.statuses.v));
+												
+												$row.find(".calls").text(parseInt($row.find(".calls").text())+totalStatuses);
+												$row.find(".hours").text(parseFloat(parseFloat($row.find(".hours").text())+parseFloat(entry.tunnit)).toFixed(2));
+												$row.find(".provisio").text(parseFloat(parseFloat($row.find(".provisio").text())+parseFloat(entry.provisiopalkka)).toFixed(2));
+												$row.find(".palkka_hourly").text(parseFloat(parseFloat($row.find(".palkka_hourly").text())+parseFloat(entry.tuntipalkka ||0)).toFixed(2));
+												$row.find(".money").text(parseFloat(parseFloat($row.find(".money").text())+parseFloat(entry.tuntipalkka || 0.00)+parseFloat(entry.provisiopalkka)).toFixed(2));
+											}
+										})
+									}
+									
+									
+									
+								});
+								if(reportType == "general"){
+									var dateStr = origStart.format("DD.MM.YYYY") + " - " + origEnd.format("DD.MM.YYYY")
+									$(".campaign-nimi").text(dateStr)
+								}
+								
+								$table.find(".table-row").not(".template").toArray().forEach(function(t){
+									var calls = parseInt($(t).find(".calls").text());
+									if(calls == 0){
+										$(t).addClass("empty");
+										if(hideEmpty == true){
+											$(t).addClass("hidden");
+										}
+									}
+								});
+								
+								calculateTotalsInTable($table, function() {
+										calculatePowersInTable($table, function(){
+											
+											$table.fadeIn("fast", function(){
+												
+											});
+											
+										});	
+									});
+							}
+										
+						}
+						
+						if(slide){
+							var _self = $("#report-range");
+							$(_self).find('.expand').addClass('open');
+							$(_self).find('.details').slideDown(function(){
+								
+								if(cb)cb();
+					
+							});	
+						}
+						else {
+							if(cb)cb();
+						}
+				
+						if(totalTables==0) $("#report-range .no-reports").fadeIn();
+						else $("#report-range .no-reports").hide();
+					},
+				})
+			
+		}
+		
+		origStart 		= rangeDays['Tänään'][0];
+		origEnd 		= rangeDays['Tänään'][1];
+		var hideEmpty 	= false;
+		addRange('Tänään', false, function(){
+			$("#report-range .table").not(".template").slideDown(function(){
+								
+			})
+		})
+		
+		
+		$("#hideEmpty").on("click", function(){
+			hideEmpty = $(this).prop("checked");
+			$(".table-row.empty").toggleClass("hidden", hideEmpty);
+		});
+		
+		$('input[name="daterange"]').daterangepicker({
+			locale: {
+			  "format": "DD.MM.YYYY",
+				"separator": " - ",
+				"applyLabel": "Hyväksy",
+				"cancelLabel": "Peruuta",
+				"fromLabel": "",
+				"toLabel": "",
+				"customRangeLabel": "Muokattu",
+				"weekLabel": "V",
+				"daysOfWeek": [
+					"Su",
+					"Ma",
+					"Ti",
+					"Ke",
+					"To",
+					"Pe",
+					"La"
+				],
+				"monthNames": [
+					"Tammikuu",
+					"Helmikuu",
+					"Maaliskuu",
+					"Huhtikuu",
+					"Toukoku",
+					"Kesäkuu",
+					"Heinäkuu",
+					"Elokuu",
+					"Syyskuu",
+					"Lokakuu",
+					"Marraskuu",
+					"Joulukuu"
+				],
+				"firstDay": 1
+			},
+			startDate: new Date(),
+			endDate: new Date(),
+			maxDate: new Date(),
+			linkedCalendars: false,
+		}, 
+		function(start, end, label) {
+			
+			origStart	= start;
+			origEnd		= end;	
+			
+			addRange(label, false, function(){
+				$("#report-range .table").not(".template").slideDown(function(){})
+			})
+		});
+		
+		$("#showTotalsOnly").on("click", function(){
+			var hideBodys = $(this).is(":checked");
+			
+			if(hideBodys) $(".body-content").addClass("hidden")
+			else $(".body-content").removeClass("hidden")
+		});
+		
+		if(userlevel > 1){
+			IOclient.on("users.list", function(_users){
+			
+				var $us 		= $("#userSelect");
+				var sortedUsers = _.sortBy(_users, "aktiivinen").reverse();
+				
+				sortedUsers.forEach(function(user){
+					
+					if(user.aktiivinen == 1){
+						
+						$us.find("optgroup#act").append($("<option value='"+user._id+"'>"+user.yhteystiedot.nimi.etu+ " " +user.yhteystiedot.nimi.suku+"</option>"))
+					}
+					else {
+						$us.find("optgroup#pass").append($("<option value='"+user._id+"'>"+user.yhteystiedot.nimi.etu+ " " +user.yhteystiedot.nimi.suku+"</option>"))
+					}
+				});
+				$us.select2({
+					containerCssClass: "no-print",
+				});
+			});
+			
+			$("#userSelect").on("change", function(){
+				selectedUser = $(this).val();
+			
+				if(selectedUser != "*"){
+					su = $(this).find("option:selected").text()
+					$(".selectedUser").text("Myyjä: "+su)
+				}
+				else {
+					$(".selectedUser").text("")
+				}
+				addRange(label, false, function(){
+					$("#report-range .table").not(".template").slideDown(function(){})
+				})
+			});
+		}

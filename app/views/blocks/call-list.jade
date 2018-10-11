@@ -1,0 +1,111 @@
+-
+	function linkify(inputText, text) {
+		var replacedText, replacePattern1, replacePattern2, replacePattern3;
+
+		//URLs starting with http://, https://, or ftp://
+		replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
+		replacedText = inputText.replace(replacePattern1, '$1');
+
+		//URLs starting with "www." (without // before it, or it'd re-link the ones done above).
+		replacePattern2 = /(^|[^\/])(www\.?[\S]+(\b|$))/gim;
+		replacedText = replacedText.replace(replacePattern2, 'http://$2');
+
+		//Change email addresses to mailto:: links.
+		replacePattern3 = /(([a-zA-Z0-9\-\_\.])+@[a-zA-Z\_]+?(\.[a-zA-Z]{2,6})+)/gim;
+		replacedText = replacedText.replace(replacePattern3, '$1');
+		return replacedText;
+	}	
+
+#call-list
+	h1 Soittolistasi
+	h4.hidden.no-call-items Ei soitettavia asiakkaita
+	.list
+		strong.loading-campaigns.text-uppercase Ladataan soittolistaa...
+		for campaign in userCampaigns
+			if(userCampaignItems[campaign._id])
+				li.list-unstyled: section.campaign-section(data-id="campaign._id" style='display:none')
+					.camp-header
+						span.count= userCampaignItems[campaign._id].length
+						h2.campaign-name(style="text-transform:none") <span class='name' style='padding:0'>#{campaign.nimi}</span>
+							small.customer-name= campaign.customerName
+					ul#camp-list-items.camp-list
+						.list
+							for item in userCampaignItems[campaign._id]
+								if(item.status == "EV" ||item.status == "ES" || item.status == "SU" || item.status == "")
+									li.campaign-item(id='campaign-item-#{item._id}')
+										
+										button.expand: span
+										if(item.status == "Ei soitettu")
+											span.status.es ES
+										else
+											span.status(class="#{item.status.toLowerCase()}")= item.status || "?"
+										.short-details
+											h3.payload-1= item.payload[0].value || "Nimetön"
+												for pl in item.payload
+													if(pl.name == "puhelinnumero")
+														br
+														small= pl.value
+											div.call-times: strong.title.callAgainLabel
+												if(item.soitaUudestaan)
+													| Soita uudestaan
+													br
+												if(item.soitaUudestaan)
+													span.hidden.callAgainUnixTime= _moment(item.soitaUudestaan).format("X")
+													span.callAgainTimeString(data-time='#{item.soitaUudestaan}')= _moment(item.soitaUudestaan).locale("fi").fromNow()
+												else if(item.soitettu)
+														if(item.soitettu.length == 0)
+																strong.title.callAgainLabel
+																	span.call-again-text.hidden Yritetty soittaa 
+																	span.call-count.hidden 0
+																	span.call-again-affix.hidden  kertaa
+																	span.callAgainTimeString
+												if(item.soitaUudestaan)			
+													span.calendar: small(style='color:#666')
+														if(item.soitaUudestaan)
+															br
+															| <i class='fa fa-fw fa-calendar'></i> #{_moment(item.soitaUudestaan).locale("fi").format("DD.MM.YYYY")} <br/><i class='fa fa-fw fa-clock-o'></i> #{_moment(item.soitaUudestaan).format("HH:mm")}
+		
+												if(item.status != "ES" && !item.soitaUudestaan)
+													if(item.soitettu)
+														if(item.soitettu.length > 0)
+																span.call-again-text Yritetty soittaa 
+																span.call-count= item.soitettu.length
+																if( item.soitettu.length == 1)
+																	span.call-again-affix  kerran
+																else 
+																	span.call-again-affix  kertaa
+																span.callAgainTimeString
+																	br
+																	= "Viimeksi "+ _moment(item.soitettu[item.soitettu.length-1].aika).locale("fi").format("DD.MM.YYYY HH:mm")
+														else
+															strong.hidden.title Soitettu 			
+																	
+										.details.row
+											.col-lg-6
+												- var addInfo = ""
+												form#client-details
+													for payload, index in item.payload
+														if(payload.name != "lisätietoja")
+															if(payload.name != "www-sivut")
+																label.text-capitalize(for='#{payload.name}') #{payload.name}
+																input.form-control(type='text', name='#{payload.name}', value='#{payload.value}')
+															else
+																label.text-capitalize(for='#{payload.name}') www-sivut 
+																	a(href="#{linkify(payload.value)}" target="_blank") Linkki
+																input.form-control(type='text', name='#{payload.name}', value='#{payload.value}')
+															
+														else
+															- addInfo = payload.value
+												
+											.col-lg-6
+												label(for='info') Lisätietoja
+												textarea#desc.form-control.textarea(name="info" cols='40' rows='15')= item.report || addInfo
+													
+												.buttons
+													button.ok.status-change(title="Kauppa toteutui") OK
+													button.ei.status-change(title="Ei ostanut") EI
+													button.ev.status-change(title="Ei vastannut") EV
+													button.su.status-change(title="Soita uudestaan") SU
+													button.tj.status-change(title="Tilattu jo") TJ
+													button.v.status-change(title="Väärä numero") V
+												button(data-id="#{item._id}" disabled).submit.disabled.submit-client Valitse

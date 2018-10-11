@@ -1,0 +1,137 @@
+h1 #{appSettings.name} hallinta
+	br
+	small: small versio #{appSettings.version}
+h3.cpu Prosessori 
+	small.model
+
+.row: col-xs-12
+	h4.loadavg.text-center
+		div.col-xs-12.col-md-4 Käyttö viimeisen minuutin aikana 
+			#cpuUsage1
+		div.col-xs-12.col-md-4 Käyttö viimeisen 5 minuutin aikana
+			#cpuUsage2
+		div.col-xs-12.col-md-4 Käyttö viimeisen 15 minuutin aikana
+			#cpuUsage3
+hr
+
+h3.mem Muisti 
+	small.text
+		span.freemem
+		|  / 
+		span.totalmem
+	br
+	br
+	#membar(style='background-color:#89b54a')
+hr
+h3.hostUptime Järjestelmä ollut käynnissä 
+	small.hostUptimeText
+h3.appUptime Ohjelma ollut käynnissä 
+	small.appUptimeText
+script.
+	
+		var logClient	= io.connect("http://#{appSettings.domain}:#{parseInt(appSettings.socketPort)+1}/superadmin");
+		//console.log(logClient);
+			
+		var membar = new ProgressBar.Line("#membar", {
+			color: '#ec9417'
+		});
+		
+		var startColor = '#ec9417';
+		var endColor = '#ec9417';
+		
+		var cpuUsage1 = new ProgressBar.Circle("#cpuUsage1", {
+			
+			color: "#ec9417",
+			trailColor: '#89b54a',
+			trailWidth: 3,
+		
+		    strokeWidth: 5,
+
+			step: function(state, bar) {
+				 bar.path.setAttribute('stroke', state.color);
+				 bar.setText((bar.value() * 100).toFixed(0)+"%");
+			},
+		});
+				
+		var cpuUsage2 = new ProgressBar.Circle("#cpuUsage2", {
+			
+		color: "#ec9417",
+			trailColor: '#89b54a',
+			trailWidth: 3,
+		
+		    strokeWidth: 5,
+
+			step: function(state, bar) {
+				 bar.path.setAttribute('stroke', state.color);
+				 bar.setText((bar.value() * 100).toFixed(0)+"%");
+			},
+		});
+				
+		var cpuUsage3 = new ProgressBar.Circle("#cpuUsage3", {
+			color: "#ec9417",
+			trailColor: '#89b54a',
+			trailWidth: 3,
+		
+		    strokeWidth: 5,
+
+			step: function(state, bar) {
+				 bar.path.setAttribute('stroke', state.color);
+				 bar.setText((bar.value() * 100).toFixed(0)+"%");
+			},
+		});
+		
+			
+		logClient.on("connect", function(){
+			logClient.emit("requestLogs", {offset:-1});
+		});
+		
+		logClient.on("monitor", function(data){
+			
+			var cpu = _.pluck(data.cpus, "model").join("<br/>");
+			$(".cpu .model").text(cpu);
+			
+			$(".freemem").text(formatBytes(data.freemem, 2));
+			$(".totalmem").text(formatBytes(data.totalmem, 2));
+			
+			var memPercentInUse = data.freemem / data.totalmem;
+			membar.animate(memPercentInUse);
+			
+			var d = secondsToString(parseInt(data.uptime));
+			$(".appUptimeText").text(d);
+			d = secondsToString(parseInt(data.osUptime));
+			$(".hostUptimeText").text(d);
+			
+			
+			cpuUsage1.animate((parseFloat(data.loadavg[0]).toFixed(3)),{
+				from: {color: startColor},
+				to: {color: endColor}
+			})
+			cpuUsage2.animate((parseFloat(data.loadavg[1]).toFixed(3)),{
+				from: {color: startColor},
+				to: {color: endColor}
+			})
+			cpuUsage3.animate((parseFloat(data.loadavg[2]).toFixed(3)),{
+				from: {color: startColor},
+				to: {color: endColor}
+			})
+		//	cpuUsage1.animate((parseFloat(data.loadavg[1]).toFixed(3)))
+			//cpuUsage1.animate((parseFloat(data.loadavg[2]).toFixed(3)))
+		
+			
+		});
+		
+		$(".logLink").off("click").on("click", function(e){
+			e.preventDefault();
+			$.get("/superadmin/logs", function(logs){
+				$("main .container").html(logs);
+				logClient.emit("requestLogs", {offset:-1});
+			});
+			
+			
+			
+		})
+		
+		logClient.on("logEntry", function(entry){
+			//console.log(entry);
+			var $row = $("<tr><td>"+moment(entry.timestamp).format("DD.MM.YY HH:mm:ss")+"</td><td class='"+entry.level+"'>"+entry.level+"</td><td>"+entry.message+"</td></tr>").prependTo($(".logEntrys")).fadeIn('fast');
+		});

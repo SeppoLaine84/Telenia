@@ -1,0 +1,247 @@
+extends layout
+block content
+	#editorTools
+		button#editText.btn.btn-default.dim.icon(title="Muokkaa tekstiä")
+			i.fa.fa-edit
+		button.btn.btn-default.dim.icon.colorpicker-component.icon-colorpick(title="Tekstin väri" data-dbKey='pageBody' data-dbSubKey='color')
+			i.fa.fa-paint-brush
+		button.btn.btn-circle.btn-default.close-tools(style='margin-left:6px' title="Sulje")
+			i.fa.fa-times
+	#page-wrapper.gray-bg
+		.row.wrapper.border-bottom.white-bg.page-heading
+			h1
+				i.fa.fa-spinner.fa-pulse.fa-fw.page-title-icon
+				span.page-title= loadingText
+		.fh-breadcrumb(style='height:calc(100% - 84px) !important;')			
+			.fh-column
+				.full-height-scroll
+					ul.list-group.elements-list
+						include sidepanel
+			.full-height: .full-height-scroll.white-bg.border-left
+				#previewView
+					.container-fluid
+						include templates/default
+				
+																				
+block content-scripts
+	script(src="/js/bootstrap-colorpicker.min.js")
+	script.
+		/*--------------------------------------------------------------------------------------.
+		|	ASIAKKAILLE TARKOITETUN OMAN SIVUSTON - PIKA-OHJEET   |								|
+		|---------------------------------------------------------´								|
+		|																		    			|
+		|	 JULKINEN OSOITTE																	|
+		|	------------------																	|
+		|																						|
+		|		* https://www.telenia.fi/public/:kampanjaID										|
+		|			Julkinen osoite, esim. Messu vieraille missä täytetään tiedot. 				|		
+		|																						|
+		|																						|
+		|	 SIVUSTON MUOKKAUS JA LUOMINEN														|
+		| 	-------------------------------														|
+		|																						|
+		|		* Linkki sivun muokkaamiseen löytyy valmiin kampanjan asetuksista. 				|
+		|		  																				|
+		|		* Voit myös suoraan mennä linkin kautta muokkaukseen:							|
+		|				 																	|
+		|																						|
+		|		* Sivueditorin vasemmassa paneelissa on sivuston asetukset:						|
+		|		   - käyttäjätunnusten määrittäminen kirjautumiseen "tapahtumassa".				|
+		|		   - Mitä kenttiä käytetään sivuston lomakkeessa.								|
+		|																						|
+		|		* Sivun tekstejä ja yksittäisiä värejä voi muuttaa klikkaamalla oikealla 		|
+		|	      olevassa "esikatselu" ruudussa tekstikenttiä,									|
+		|		  jolloin avautuu työkalut tekstin muokkaamiseen.								|
+		|         																				|
+		|																						|
+		|	 KIRJAUTUMINEN 																		|	
+		|	---------------																		|
+		|																						|
+		|		* Kirjautuminen tapahtuu samalla tavalla kuin Teleniaan muutenkin,				|
+		|		  Mutta jos kirjautuminen havaitsee että on julkisen sivun tunnukset			|
+		|		  käytössä, niin kirjautuu asiakkaan sivuille.									|
+		|																						|
+		|																						|							
+		|	 EI VALMIIT OMINAISUUDET JA IDEAT													|	
+		|	----------------------------------													|		
+		|																						|
+		|		* https://www.telenia.fi/public/:kampanjaID/tilastot							|							    					
+		|		   - Asiakas voisi itse nähdä julkisen kampanjan statistiikkaa?					|
+		|																						|
+		|		* Erilaisten komponenttien manuaalinen lisäys sivulle.							|
+		|		   - esim. Kalenteri ajanvarausta varten.										|
+		|																						|		  
+		|		* Paremmat muokkaus mahdollisuudet tyyleihin.									|
+		|																						|		
+		|		* Erilaisia sivusto rakenteita.													|							
+		|																						|
+		|		* Valmiita eri värityylejä.														|							
+		|																						|							
+		|																						|							
+		|																						|							
+		|																						|						
+		'--------------------------------------------------------------------------------------*/
+		  
+							
+		var $editorTools 		= $("#editorTools");
+	  
+		
+		
+		var selectedElement 	= "undefined";
+		var editorToolsVisible 	= false;
+		var mouseX;
+		var mouseY;
+		
+		function saveValueToDB(cid, type, dbKey, dbSubKey, value){
+			$.ajax({
+				url:		"/campaign/offsite/update",
+				type:		"POST",
+				dataType:	"JSON",
+				data: 		{cid:cid, type:type, dbKey:dbKey, dbSubKey: dbSubKey, value:value},
+				success: function(ret){
+					console.log(ret);
+				}
+			});
+		}
+		
+		function toggleKeyDB(cPageID, keyID, enabled){
+		
+			$.ajax({
+				url:		"/campaign/offsite/update",
+				type:		"POST",
+				dataType:	"JSON",
+				data: 		{cid: cPageID, type:"toggleKey", keyID: keyID, enabled:enabled},
+				success: function(ret){
+					console.log(ret);
+				}
+			});
+		}
+		
+		function hideEditorTools () {
+			editorToolsVisible = false;
+			$editorTools.css({opacity:0,  "pointer-events": "none"	});
+		}
+			
+		$(document).ready(function(){
+
+			
+			$('.colorpick').colorpicker();
+			$('.icon-colorpick').colorpicker();
+			
+			$('.colorpick').on("hidePicker", function(e){
+				var dbKey 		= $(this).data("dbkey");
+				var dbSubKey 	= $(this).data("dbsubkey");
+				var value 		= e.color.toHex();
+				saveValueToDB("#{cPage._id}","customization", dbKey, dbSubKey, value)
+			});
+			
+			$('.colorpick').on("changeColor", function(e){
+				var dbKey 		= $(this).data("dbkey");
+				var dbSubKey 	= $(this).data("dbsubkey");
+				var value 		= e.color.toHex();
+				 $("#previewView #"+dbKey).css({[dbSubKey]:value});
+			});
+			
+			$('.icon-colorpick').on("hidePicker", function(e){
+				var dbKey 		= $(selectedElement).data("dbkey");
+				var dbSubKey 	= "color";
+				var value 		= e.color.toHex();
+				
+				hideEditorTools();
+				saveValueToDB("#{cPage._id}","customization", dbKey, dbSubKey, value)
+			});
+			
+			$('.icon-colorpick').on("changeColor", function(e){
+				var dbKey 		= $(selectedElement).data("dbkey");
+				var dbSubKey 	= "color";
+				var value 		= e.color.toHex();
+				
+				$(selectedElement).css({[dbSubKey]:value});
+			});
+			
+			
+			/*
+			
+			
+			*/
+			
+			$(".autosave").on("blur", function(){
+				var data = $(this).data()
+				console.log(data);
+			});
+			
+			$(".toggleKey").on("change", function(){
+				var checked= $(this).attr("checked");
+				var name = $(this).data("target").toLowerCase();
+				$("input[name='"+name+"'").toggleClass("hidden disabled");
+				var keyID = $(this).data("keyid");
+					
+				toggleKeyDB("#{cPage._id}", keyID, checked);
+		
+			});
+			
+			
+			$("#editText.icon").on("click", function(){
+				$(selectedElement).trigger("edit");
+				
+				hideEditorTools();
+			});
+			
+			$(".icon").on("click", function(){
+				
+				var toggle = $(this).data("toggle");
+				if(toggle){
+					$(this).find(toggle).toggleClass("hidden");
+				}
+			});
+			
+			$(".close-tools").on("click", function(){
+				hideEditorTools () 
+			});
+			
+			$(".editor_text").on("click", function(e){
+				selectedElement 	= this;
+				editorToolsVisible 	= true;
+				
+				var X = $(this).offset().left;
+				var Y = $(this).offset().top + ( $(this).outerHeight());
+				
+				$(".editor_text").not($(this)).removeClass("active");
+				$(this).addClass("active");
+				
+				$editorTools.css({'top':Y,'left':X, opacity:1, "pointer-events": "all"});
+				
+			});
+					
+			
+			$('.editor_text').editable("/campaign/offsite/update", {
+				
+				submitdata : function() {
+					var type		= $(this).data("updatetarget")
+					var keyFromID 	= "";
+					var dbKey 		= $(this).data("dbkey");
+					
+					if($(this).data("keyfromid"))
+						keyFromID = $(this).attr("id");
+										
+					var dbSubKey 	= $(this).data("dbsubkey");
+					return {cid:'#{cPage._id}', type:type, keyFromID:keyFromID, dbKey:dbKey, dbSubKey: dbSubKey};
+				},
+			
+				event     : "edit",
+				indicator: 	'Tallennetaan...',
+				
+				submit:		'Hyväksy',
+				cancel : 	'Peruuta',
+				type:		'textarea', 
+				cssclass : 	'editor-form', 
+				
+				onblur : 	function(){
+					hideEditorTools();
+				},
+				callback: function(value, settings){
+					hideEditorTools();
+				},
+			});
+			
+		});

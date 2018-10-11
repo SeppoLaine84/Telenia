@@ -1,0 +1,109 @@
+.soittolista.white-bg
+		.panel
+			.panel-body
+				div#payload-list: ul.panel-group.list-unstyled.list()
+					include add-call-item
+					.pl-container
+						each payload in payloads
+							li.panel.panel-default.payload-item.campaing-item.hidden(id="payload-#{payload._id}" data-status="#{payload.status}" data-calls="#{payload.soitettu.length}"  )
+								.panel-heading
+									a.panel-title()
+										.panel-status(class='bg-#{payload.status.toLowerCase()}')= payload.status
+										.row
+											.col-md-6
+												if(payload.payload[0])
+													h2.payload-name= payload.payload[0].value || "Nimetön"
+												else
+													h2.payload-name Nimetön
+								
+								.panel-body
+									form.row.payload-datas.details.no-display(id="payload-#{payload._id}-data")
+					
+										.col-sm-6.payloads
+											each pl in payload.payload
+												if(pl.name.toLowerCase() == "puhelinnumero")
+													if(pl.value)
+														- pnum = pl.value
+													else
+														- pnum = ""
+												.form-group
+													label.control-label(for="#{pl.name}")= pl.name
+													if(pl.value)
+														input.form-control(name="#{pl.name}" value='#{pl.value || ""}')
+													else
+														input.form-control(name="#{pl.name}" value='')
+										.col-sm-6.more-info
+											.form-group
+												label Lisätietoja
+												textarea.form-control#desc(cols='40', rows='10')= payload.report
+												
+											.kuittaus-buttons
+												button.btn.btn-ok.btn-lg.status-change(type='button')
+													strong OK
+												button.btn.btn-ei.btn-lg.status-change(type='button')
+													strong EI
+												button.btn.btn-ev.btn-lg.status-change(type='button')
+													strong EV
+												button.btn.btn-su.btn-lg.status-change(type='button')
+													strong SU
+												button.btn.btn-tj.btn-lg.status-change(type='button')
+													strong TJ
+												button.btn.btn-v.btn-lg.status-change(type='button')
+													strong V
+											hr
+											.callAgainDialog(data-maxdate='#{(campaign.kesto||"1 y")}')
+											
+											button.btn.btn-white.btn-lg.kuittaus.disabled(type='button' data-campID='#{campaign._id}' data-plID='#{payload._id}') Hyväksy valinta
+								if(payload.status == "SU")
+									.panel-footer
+										h4.pnum= pnum
+										.callAgain Soita uudestaan 
+											strong.callAgainTime= moment(payload.soitaUudestaan).format("DD.MM.YYYY HH:mm")
+											.callAgainTimeString.capitalize(data-time="#{moment(payload.soitaUudestaan)}")= moment(payload.soitaUudestaan).locale("fi").fromNow()
+											br
+											.calledTime Soittoja 
+												strong.call-count= payload.soitettu.length
+												br
+												.callTimes
+													each call in payload.soitettu.reverse()
+														strong= moment(call.aika).format("DD.MM.YYYY HH:mm")
+														br
+								else if(payload.status == "EV")		
+									.panel-footer
+										h4.pnum= pnum
+										.callAgain.hidden Soita uudestaan 
+											strong.callAgainTime
+											.callAgainTimeString.capitalize(data-time="")
+											br
+										.callData Soittoja 
+											strong.call-count= payload.soitettu.length
+											br
+											.callTimes
+												each call in payload.soitettu.reverse()
+													strong= moment(call.aika).format("DD.MM.YYYY HH:mm")
+													br
+								else if(payload.status == "OK")
+									.panel-footer
+										h4.pnum= pnum
+										.callAgain Soita uudestaan 
+											strong.callAgainTime= moment(payload.soitaUudestaan).format("DD.MM.YYYY HH:mm")
+											.callAgainTimeString.capitalize(data-time="#{moment(payload.soitaUudestaan)}")= moment(payload.soitaUudestaan).locale("fi").fromNow()
+											br
+											.calledTime Soittoja 
+												strong.call-count= payload.soitettu.length
+												br
+												.callTimes
+													each call in payload.soitettu.reverse()
+														strong= moment(call.aika).format("DD.MM.YYYY HH:mm")
+														br
+								else
+									.panel-footer
+										h4.pnum= pnum
+										.callAgain.hidden Soita uudestaan 
+											strong.callAgainTime
+											.callAgainTimeString.capitalize(data-time="")
+											br
+										.callData.hidden Soittoja 
+											strong.call-count 0
+											br
+											.callTimes

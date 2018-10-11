@@ -1,0 +1,38 @@
+li.company
+	button.expand: span
+	h3#cname= company.nimi
+	span= company.vat
+	.details.row
+		.col-lg-6
+			h4 Yhteystiedot
+			label(for="nimi") Yrityksen nimi
+			input.form-control(type="text" name="nimi" value="#{company.nimi}")
+			label(for="vat") Y-Tunnus
+			input.form-control(type="tel" name="vat" value="#{company.vat}")
+	
+			label(for='yhteystiedot.nimi') Yhteyshenkilön nimi
+			input.form-control(type='text' id='yhteystiedot.nimi'  name='yhteystiedot.nimi' value='#{company.yhteystiedot.nimi}')
+			label(for='yhteystiedot.puhelin') Puhelin
+			input.form-control(type='tel' id='yhteystiedot.puhelin' name='yhteystiedot.puhelin' value='#{company.yhteystiedot.puhelin}')
+			label(for='yhteystiedot.osoite.katu') Katuosoite
+			input.form-control(type='text' id='yhteystiedot.osoite.katu'  name='yhteystiedot.osoite.katu' value='#{company.yhteystiedot.osoite.katu}')
+			label(for='yhteystiedot.osoite.postinro') Postinumero
+			if(company.yhteystiedot.osoite.postinro == 0)
+				input.form-control(type='text' id='yhteystiedot.osoite.postinro'  name='yhteystiedot.osoite.postinro' value='')
+			else
+				input.form-control(type='text' id='yhteystiedot.osoite.postinro'  name='yhteystiedot.osoite.postinro' value='#{company.yhteystiedot.osoite.postinro}')
+			label(for='yhteystiedot.osoite.kunta') Postitoimipaikka
+			input.form-control(type='text' id='yhteystiedot.osoite.kunta' name='yhteystiedot.osoite.kunta' value='#{company.yhteystiedot.osoite.kunta}')
+		.col-lg-6
+			h4 Käyttäjät
+			if(company.currentUsers)
+				for user in company.currentUsers
+					p= user.email
+			hr/
+			button.submit.save-company
+				i.fa.fa-pencil
+				|  Päivitä tiedot
+			hr/
+			button.submit.red.remove-company(data-id="#{company._id}")
+				i.fa.fa-trash
+				|  Poista yritys

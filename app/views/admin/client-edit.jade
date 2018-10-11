@@ -1,0 +1,150 @@
+extends ../adminLayout
+block content
+	#page-wrapper.gray-bg
+		.row.wrapper.border-bottom.white-bg.page-heading
+			.col-xs-12
+				h1
+					i.fa.fa-spinner.fa-pulse.fa-fw.page-title-icon
+					span.page-title= loadingText
+		.wrapper-content: .row: #main-content.col-xs-12
+			.row
+				.col-sm-12.col-md-8
+					.tabs-container
+						.tabs-left
+							
+								ul.nav.nav-tabs
+									li.active
+										a(data-toggle="tab" href="#tiedotTab" aria-expanded="true")
+											i.fa.fa-fw.fa-book
+											| Yhteystiedot
+									li
+										a(data-toggle="tab" href="#usersTab" aria-expanded="false") 
+											i.fa.fa-fw.fa-file-text-o
+											| Sopimus
+									li
+										a(data-toggle="tab" href="#usersTab" aria-expanded="false") 
+											i.fa.fa-fw.fa-users
+											| Käyttäjät
+									
+								.tab-content
+									//////////////////////////////////////////////////////
+									// Yhteystiedot TAB
+									//////////////////////////////////////////////////////
+									#tiedotTab.tab-pane.active
+										.panel-body
+											form.form.col-xs-12#yhteystiedotForm(method="POST" action="/admin/client/save/contactInfo")
+												.form-group(style='margin-bottom:40px')
+													.col-lg-3.text-right: label(for='nimi' style='margin-top:0.66em;') Yrityksen nimi
+													.col-lg-9: input.form-control(type='text' name='nimi' value='#{client.nimi}' placeholder="Yrityksen nimi")
+												.form-group(style='margin-bottom:40px')
+													label.col-lg-3.control-label(for='vat' style='margin-top:0.66em;') Y-Tunnus
+													.col-lg-9: input.form-control(type='text' name='vat' value='#{client.vat}' placeholder="Y-Tunnus")
+												.form-group
+													label.col-lg-3.control-label(for='yhteystiedot.nimi' style='margin-top:0.66em;') Yhteyshenkilön nimi
+													.col-lg-9: input.form-control(type='text' name='yhteystiedot.nimi' value='#{client.yhteystiedot.nimi}' placeholder="Yhteyshenkilön nimi")
+												.form-group
+													label.col-lg-3.control-label(for='yhteystiedot.email' style='margin-top:0.66em;') Sähköposti
+													.col-lg-9: input.form-control(type='email' name='yhteystiedot.email' value='#{client.yhteystiedot.email}' placeholder="Sähköposti")
+												.form-group
+													label.col-lg-3.control-label(for='yhteystiedot.puhelin' style='margin-top:0.66em;') Puhelin
+													.col-lg-9: input.form-control(type='tel' name='yhteystiedot.puhelin' value='#{client.yhteystiedot.puhelin}' placeholder="Puhelin")
+												.form-group
+													label.col-lg-3.control-label(for='yhteystiedot.osoite.katu' style='margin-top:0.66em;') Katuosoite
+													.col-lg-9: input.form-control(type='text' name='yhteystiedot.osoite.katu' value='#{client.yhteystiedot.osoite.katu}' placeholder="Katuosoite")
+												.form-group
+													label.col-lg-3.control-label(for='yhteystiedot.osoite.postinro' style='margin-top:0.66em;') Postinumero
+													.col-lg-9: input.form-control(type='tel' name='yhteystiedot.osoite.postinro' value='#{client.yhteystiedot.osoite.postinro}' placeholder="Postinumero")
+												.form-group
+													label.col-lg-3.control-label(for='yhteystiedot.osoite.kunta' style='margin-top:0.66em;') Kunta
+													.col-lg-9: input.form-control(type='text' name='yhteystiedot.osoite.kunta' value='#{client.yhteystiedot.osoite.kunta}' placeholder="Kunta")
+												.form-group
+													button.btn.btn-success.btn-sm.pull-right.disabled.save-clientDetails(type='submit') Tallenna muutokset	
+				.col-sm-12.col-md-4
+					.ibox
+						.ibox-heading
+							h2.ibox-title Asiakaan sopimus
+						.ibox-content
+							p.subStarted(data-date='#{client.sopimus.alkanut}') Sopimus alkanut: #{moment(client.sopimus.alkanut).locale("fi").calendar()}
+								br
+								span.hidden.error-msg.text-danger Varoitus: 
+									strong  Sopimus umpeutuu.
+							p.usesCount(data-count="#{client.users.length}") Käyttäjiä 
+								strong= client.users.length
+								|  kappaletta. 
+							form.form
+								.form-group
+									label(for='sopimus.tyyppi')
+									select#sopimusSelect.form-control(name="sopimus.tyyppi")
+										option(value="1") 30 Päivän ilmainen DEMO
+										option(value="2") Kk-maksu
+										option(value="3") Kk-maksu käyttäjien perusteella
+										option(value="4") Toistaiseksi voimassa oleva
+								.form-group#hinta-group(style='display:none;')
+									label(for='sopimus.hinta') Hinta €
+									input.form-control.price(name="sopimus.hinta" type='tel' placeholder="Hinta €" value="#{client.sopimus.hinta}")
+									div.hidden.error-msg.text-danger Hinta ei ole kelvollinen.
+						.ibox-footer
+							.row: .col-xs-12
+								btn.btn.btn-success.btn-sm.pull-right.disabled.save-clientSub Tallenna
+block content-scripts
+	script.
+		IOclient.on("joined", function(){
+			
+		});
+		
+		
+		var client = !{JSON.stringify(client)};
+		
+		console.log(client)
+		
+		$("#clientDetails input").on("change", function(){
+			$(".save-clientDetails").removeClass("disabled");
+		});
+		
+		$("#sopimusSelect").val(client.sopimus.tyyppi.toString());
+		
+		if(client.sopimus.tyyppi > 1){
+			$("#hinta-group").slideDown('fast')
+		}
+		else {
+			$("#hinta-group").slideUp('fast')
+		}
+		validateSub();
+		
+		$("#sopimusSelect").on("change", function(){
+			client.sopimus.tyyppi = $(this).val();
+			$(".save-clientSub").removeClass("disabled");
+			
+			if(client.sopimus.tyyppi > 1){
+				$("#hinta-group").slideDown('fast')
+			}
+			else {
+				$("#hinta-group").slideUp('fast')
+			}
+			validateSub();
+		});
+		
+		$(".price").on("change", function(){
+			var value = parseInt($(this).val());
+			if(!isNaN(value) && value >= 0){
+				$("#hinta-group .error-msg").addClass("hidden")
+				$(".save-clientSub").removeClass("disabled");
+			}
+			else {
+				$("#hinta-group .error-msg").removeClass("hidden")
+				$(".save-clientSub").addClass("disabled");
+			}
+		});
+		
+		function validateSub(){
+			var startDate 	= moment($("p.subStarted").data("date"));
+			var diff 		= moment().diff(startDate, "days")
+			if(client.sopimus.tyyppi == 1 && diff >= 30){
+				$("p.subStarted .error-msg").removeClass("hidden")
+			}
+			else {
+				$("p.subStarted .error-msg").addClass("hidden")
+			}
+			
+		}
+		

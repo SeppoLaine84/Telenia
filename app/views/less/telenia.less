@@ -1,0 +1,93 @@
+
+@turkoosi: #3091a7;
+@oranssi: #e45f16;
+@vihrea: #89b54a;
+
+@su: #30bbd0;
+@ev: #ec9417;
+@ei: #d05252;
+@ok: #89b54a;
+@tj: #be5fc1;
+@v: #cf4b9c;
+@es: #5b5b5b;
+
+#lockScreen {
+	background:@turkoosi url('/images/bg.jpg') no-repeat 0 0;
+	background-size:cover;
+	z-index:150000;
+	display:none;
+	position:fixed;
+	width:100%;
+	height:100%;
+	opacity:0.0;
+	display:block;
+	color:#eaeaea;
+	img {
+		max-height:400px;
+	}
+	
+	.lock-word {
+		
+		span {
+			font-size:90px;	
+		}
+		.first-word {
+			
+			margin-left: 55px;
+		}
+		.second-word {
+			margin-left:-110px;
+		}
+	}
+	&.locked {
+			opacity:.95;
+		
+		body {
+			
+			overflow:hidden;
+		}
+		
+	}
+}
+
+.customerTable {
+	tr {
+		&:hover{
+			cursor:pointer;
+		}
+	}
+	
+}
+
+.payload-container {
+	padding:6px;
+	.payload-view {
+		margin-bottom:1px;
+		div:first-of-type {
+			text-transform:uppercase !important;
+			background:#fafafa;
+		}
+		div {
+			font-size:12px;
+		
+			padding:6px;
+			padding-bottom:9px;
+			
+		}
+		&:hover {
+			div:last-of-type {
+				background:#fafafa;
+			}
+		}
+	}
+}
+
+
+.note {
+	a {
+		color:white;
+		font-weight: bold;
+	}
+}
+
+

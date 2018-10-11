@@ -1,0 +1,172 @@
+extends ../../layout
+
+block content
+	#page-wrapper.gray-bg
+		.row.wrapper.border-bottom.white-bg.page-heading
+			h1
+				i.fa.fa-spinner.fa-pulse.fa-fw.page-title-icon
+				span.page-title= loadingText
+						
+		.wrapper-content
+			.row
+				#main-content.col-xs-12.gray-bg
+					.row
+						.col-xs-12.animated.bounceInRight
+							.ibox
+								.ibox-content
+									form#newLUser.form-horizontal(action="" method="POST")
+										
+										legend
+											i.fa.fa-fw.fa-edit
+											| Tiedot
+										.form-group
+											.col-lg-3
+											.col-lg-9: small.text-danger *Tähdellä merkityt kentät ovat pakollisia.
+										.form-group
+											label.col-lg-3.control-label(for='yhteystiedot.nimi.etu') Etunimi
+												span.text-danger *
+											.col-lg-9
+												input.form-control(type='text' name='yhteystiedot.nimi.etu' aria-required="true"   placeholder="Etunimi" )
+												span.error.text-error
+										.form-group
+											label.col-lg-3.control-label(for='yhteystiedot.nimi.suku') Sukunimi
+												span.text-danger *
+											.col-lg-9
+												input.form-control(type='text' name='yhteystiedot.nimi.suku' aria-required="true"  placeholder="Sukunimi")
+												span.error.text-error
+										.form-group
+											label.col-lg-3.control-label(for='email') Sähköposti
+												span.text-danger *
+											.col-lg-9
+												input.form-control(type='email' name='email' aria-required="true"  placeholder="Sähköposti" value="")
+												span.error.text-error
+										.form-group
+											label.col-lg-3.control-label(for='pwd') Salasana
+												span.text-danger *
+											.col-lg-9
+												input.form-control(type='password' minlength="4" aria-required="true" name='pwd' placeholder="Salasana")
+												span.error.text-error
+										.form-group
+											label.col-lg-3.control-label(for='puhelin') Puhelin
+											.col-lg-9
+												input.form-control(type='tel' name='yhteystiedot.puhelin'  placeholder="Puhelin")
+												span.error.text-error
+										.form-group
+											label.col-lg-3.control-label(for='yhteystiedot.osoite.katu') Katuosoite
+											.col-lg-9
+												input.form-control(type='text' name='yhteystiedot.osoite.katu'  placeholder="Katuosoite")
+												span.error.text-error
+										.form-group
+											label.col-lg-3.control-label(for='yhteystiedot.osoite.postinro') Postinumero
+											.col-lg-9
+												input.form-control(type='tel' name='yhteystiedot.osoite.postinro'  placeholder="Postinumero")
+												span.error.text-error
+										.form-group
+											label.col-lg-3.control-label(for='yhteystiedot.osoite.kunta') Kunta
+											.col-lg-9
+												input.form-control(type='text' name='yhteystiedot.osoite.kunta' placeholder="Kunta")
+												span.error.text-error
+										.form-group
+											label.col-lg-3.control-label(for='userlevel') Käyttäjän rooli
+											.col-lg-9
+												select.form-control(name='userlevel')
+													each ul, index in userlevelStrings
+														if(index >= 1 && index < 4)
+															if(index == 1)
+																option(value='#{index}' selected)= ul
+															else
+																option(value='#{index}')= ul
+										
+										
+										legend
+											i.fa.fa-fw.fa-money
+											| Palkka
+										include tools/add-palkka
+										
+										.form-group
+											button#saveUsr.btn.btn-info.pull-right(type='submit'  style='margin-right:16px')
+												i.fa.fa-fw.fa-save
+												| Luo käyttäjä
+								
+block content-scripts
+	script.
+		var user 			= !{JSON.stringify(user)};
+		var palkkaTyyppi 	= 0;
+		
+		$(document).ready(function(){
+			$("#newLUser").validate({
+				errorElement: 'span',
+				errorClass: 'err',
+				errorPlacement: function(error, element) {
+					$(element).closest(".form-group").find(".error").html(error).css("display", "block !important")
+				},
+				rules: {
+					email: 						"required",
+					pwd:						"required",
+					'yhteystiedot.nimi.etu': 	"required",
+					'yhteystiedot.nimi.suku': 	"required",
+					'palkkaTyyppi': 			"required",
+				},
+				messages: {
+					email: {
+						required: "Sähköpostiosoite tarvitaan kirjautumiseen",
+						email: "Virheellinen sähköpostiosoite"
+					},
+					pwd: {
+						required: "Kirjoita salasana",
+						minlength: jQuery.validator.format("Salasanan pituus on vähintään {0} merkkiä.")
+						
+					},	
+					'yhteystiedot.nimi.etu': {
+						required: "Etunimi on pakollinen",
+					},
+					'yhteystiedot.nimi.suku': {
+						required: "Sukunimi on pakollinen",
+					},
+					'palkkaTyyppi': {
+						required: "Palkkatyyppi on pakollinen",
+					},
+				},
+				submitHandler: function(form){
+					var data = $(form).serializeArray();
+					var d = {};
+					data.forEach(function(_d){
+						if(_d.value.length > 0)
+							d[_d.name] = _d.value;
+					})
+					
+					delete d['palkkaTyyppi'];
+					delete d['provisioEnabled'];
+					
+					d['palkka.palkkaTyyppi'] 	= palkkaTyyppi;
+					d['palkka.provisioEnabled'] = $(".palkkaTyypiSelect.active .provisioEnabled").is(":checked");
+					
+					IOclient.emit("req.user.add", d);
+				},
+				
+			});
+		});
+		
+		$("#palkkaTyyppi").on("change", function(){
+			palkkaTyyppi = parseInt($(this).val());
+			$(".palkkaTyypiSelect").addClass("hidden");
+			$("#palkkaTyyppi-"+palkkaTyyppi).removeClass("hidden").addClass("active")
+			
+			$('.palkkaValue').each(function() {
+				$(this).rules('remove', 'required');
+			});
+			
+			$(this).closest("form").find('.palkkaTyypiSelect.active .palkkaValue').each(function() {
+				$(this).rules('add', {
+					required:true,
+					messages:{
+						required: "Palkka on pakollinen tieto.",
+					},
+				});
+			});
+		});
+		
+		IOclient.on("user.created", function(data){
+			toastr['success']('Käyttäjä <strong>'+data.status.email+'</strong> luotu onnistuneesti.', 'Käyttäjän luonti');
+			IOclient.emit("req.users.list");
+		});

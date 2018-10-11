@@ -1,0 +1,106 @@
+extends ../../layout
+block content
+	#page-wrapper.gray-bg
+		.row.wrapper.border-bottom.white-bg.page-heading
+			h1
+				i.fa.fa-spinner.fa-pulse.fa-fw.page-title-icon
+				span.page-title= loadingText
+						
+		.wrapper-content
+			.row
+				#main-content.col-xs-12.gray-bg
+					.row
+						.col-xs-12.animated.bounceInRight
+							.ibox
+								.ibox-content
+									form#editCustomer.form-horizontal(autocomplete='off')
+									
+										legend
+											i.fa.fa-fw.fa-edit
+											| Asiakkaan tiedot
+										.form-group
+											label.col-lg-3.control-label(for='nimi') Nimi
+											.col-lg-9: input.form-control(type='text' name='nimi' required aria-required="true"   placeholder="Asiakkaan nimi" value="#{customer.nimi}" )
+										.form-group
+											label.col-lg-3.control-label(for='vat') Y-Tunnus
+											.col-lg-9: input.form-control(type='text' name='vat' placeholder="Y-Tunnus" value="#{customer.vat}")
+										
+										.form-group
+											label.col-lg-3.control-label(for='yhteystiedot.nimi') Yhteyshenkilön nimi
+											.col-lg-9: input.form-control(type='text' name='yhteystiedot.nimi' placeholder="Yhteyshenkilön nimi" value="#{customer.yhteystiedot.nimi}")
+										.form-group
+											label.col-lg-3.control-label(for='yhteystiedot.email') Sähköposti
+											.col-lg-9: input.form-control(type='email' name='yhteystiedot.email' placeholder="Sähköposti" value="#{customer.yhteystiedot.email}")
+										.form-group
+											label.col-lg-3.control-label(for='puhelin') Puhelin
+											.col-lg-9: input.form-control(type='tel' name='yhteystiedot.puhelin'  placeholder="Puhelin" value="#{customer.yhteystiedot.puhelin}")
+										.form-group
+											label.col-lg-3.control-label(for='yhteystiedot.osoite.katu') Katuosoite
+											.col-lg-9: input.form-control(type='text' name='yhteystiedot.osoite.katu'  placeholder="Katuosoite" value="#{customer.yhteystiedot.osoite.katu}")
+										.form-group
+											label.col-lg-3.control-label(for='yhteystiedot.osoite.postinro') Postinumero
+											.col-lg-9: input.form-control(type='tel' name='yhteystiedot.osoite.postinro'  placeholder="Postinumero" value="#{customer.yhteystiedot.osoite.postinro}")
+										.form-group
+											label.col-lg-3.control-label(for='yhteystiedot.osoite.kunta') Kunta
+											.col-lg-9: input.form-control(type='text' name='yhteystiedot.osoite.kunta' placeholder="Kunta" value="#{customer.yhteystiedot.osoite.kunta}")
+								.ibox-footer
+									.row: .col-xs-12
+										button#delCsr.btn.btn-danger.pull-right(type='button' style='margin-left:8px')
+											i.fa.fa-fw.fa-trash
+											| Poista asiakas
+										
+block content-scripts
+	script.
+		var user 		= !{JSON.stringify(user)};
+		var customer 	= !{JSON.stringify(customer)};
+		
+		var typingTimer;
+		
+		$("#editCustomer input").on("input paste", function(e){
+			var _self = this;
+			
+			if(typingTimer)clearTimeout(typingTimer)
+			
+			typingTimer = setTimeout(function(){
+				var label 	= $(_self).closest(".form-group").find("label").text();
+				var val 	= $(_self).val();
+				//if(val.length > 0)
+					$.ajax({
+						url:		"/customer/set",
+						type:		"POST",
+						dataType:	"JSON",
+						data: {
+							target:	$(_self).attr("name"),
+							value:	val,
+							id:		customer._id, 
+							label:	label,
+						},
+						success: function(resp){
+						
+							if(resp.status.ok > 0)
+								toastr['success']("Tieto vaihdettu onnistuneesti.", resp.origQuery.label);
+						},
+					})
+			}, 1500);
+		});
+
+
+		$("#delCsr").on("click", function(){
+			swal({
+				title: "Asiakkaan poisto",
+				text: "Oletko varma että haluat poistaa asiakkaan?",
+				type: "warning",
+			
+				showCancelButton: true,
+				confirmButtonColor: "#DD6B55",
+				confirmButtonText: "Kyllä, poista",
+				cancelButtonText: "Peruuta",
+				closeOnConfirm: true,
+				
+				}, function () {
+					
+					IOclient.emit("req.customer.del", {id:customer._id, nimi:customer.nimi})
+					location.href = "/aloitus";
+				});
+			
+		});

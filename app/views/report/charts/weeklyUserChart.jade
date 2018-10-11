@@ -1,0 +1,23 @@
+if(page == "etusivu")
+	.chartWidget.widgetti#weeklyUserChartWidget.hidden
+		.ibox
+			.ibox-content
+				div
+					canvas#weeklyUserChart(height="200")
+else
+	.col-lg-6.animated.fadeInDown.chartWidget
+		.ibox.float-e-margins
+			.ibox-title
+				h5 Käyttäjäkohtaiset kuittaukset
+				form.ibox-tools: small
+					.form-group
+						label.control-label(style='margin-right:.5em;') Näytä etusivulla
+						.checkbox.checkbox-inline.checkbox-info
+							if(user.uiOptions.etusivu.widgets.weeklyUserChart.show === 1)
+								input#showWeekyUserChart.showWidget(type='checkbox' name='uiOptions.etusivu.widgets.weeklyUserChart.show' checked)
+							else
+								input#showWeekyUserChart.showWidget(type='checkbox' name='uiOptions.etusivu.widgets.weeklyUserChart.show')
+							label
+			.ibox-content
+				div
+					canvas#weeklyUserChart(height="200")

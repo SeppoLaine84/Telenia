@@ -1,0 +1,15 @@
+#users.tree
+	li
+		button.expand(role="button" data-toggle="collapse" data-target="#user-content" aria-expanded="false"): span
+		h1 Käyttäjät (<span class='user-count'>#{users.length}</span>)
+		#user-content.content.collapse
+		
+			button.btn.green
+				i.fa-fw.fa.fa-plus
+				| Lisää uusi käyttäjä
+			hr/
+			ul.users
+				if(users)
+					for user in users
+						include user
+			hr/

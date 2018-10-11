@@ -1,0 +1,28 @@
+li(style='padding:0'): section(style='padding:20px'): .row: form#create-company(method="POST" action="/client/register")
+	.col-lg-6
+		h4 Yhteystiedot
+		label(for="nimi") Yrityksen nimi
+		input.form-control(type="text" name="nimi" value="")
+		label(for="vat") Y-Tunnus
+		input.form-control(type="tel" name="vat" value="")
+
+		label(for='yhteystiedot.nimi') Yhteyshenkilön nimi
+		input.form-control(type='text' id='yhteystiedot.nimi'  name='yhteystiedot.nimi' value='')
+		label(for='yhteystiedot.puhelin') Puhelin
+		input.form-control(type='tel' id='yhteystiedot.puhelin' name='yhteystiedot.puhelin' value='')
+		label(for='yhteystiedot.osoite.katu') Katuosoite
+		input.form-control(type='text' id='yhteystiedot.osoite.katu'  name='yhteystiedot.osoite.katu' value='')
+		label(for='yhteystiedot.osoite.postinro') Postinumero
+		input.form-control(type='text' id='yhteystiedot.osoite.postinro'  name='yhteystiedot.osoite.postinro' value='')
+		label(for='yhteystiedot.osoite.kunta') Postitoimipaikka
+		input.form-control(type='text' id='yhteystiedot.osoite.kunta' name='yhteystiedot.osoite.kunta' value='')
+	.col-lg-6
+		h4 Pääkäyttäjän kirjautumistiedot
+		label(for='user_email') Sähköposti
+		input.form-control(type='email' name='user_email' value='')
+		label(for='user_pwd') Salasana
+		input.form-control(type='password' name='user_pwd' value='')
+		hr/
+		button.submit.save-company(role="submit")
+			i.fa.fa-save
+			|  Tallenna

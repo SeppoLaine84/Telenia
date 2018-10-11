@@ -1,0 +1,167 @@
+script.
+	var IOclient 		= io();
+	var connectionLost 	= false;
+	
+	var IOuser;
+	var IOuserlist;
+	
+	var userlist 		= []; 	// Socketista saapunut User lista
+	var customerlist 	= [];	// Socketista Asiakkaat
+	
+	$(window).on('beforeunload', function(){
+		IOclient.close();
+	});
+	
+	IOclient.on("connect", function(){
+		/*
+		if(connectionLost == true){
+			connectionLost 	= false;
+			$("#connLost").fadeOut();
+		}*/
+		
+		IOclient.emit("LOGIN", "#{user.email}");
+	});
+	IOclient.on("reconnect", function(){
+		
+		if(connectionLost == true){
+			connectionLost 	= false;
+			$("#connLost").fadeOut();
+		}
+		
+		IOclient.emit("LOGIN", "#{user.email}");
+	});
+	
+	IOclient.on("USERINFO", function(_user){
+		IOuser = _user;
+		IOclient.emit('join', _user.clientID);
+	
+	});
+		
+	IOclient.on('connect_error', function (err) {
+		connectionLost = true;
+		$("#connLost").fadeIn();
+	});
+	
+	// Päivitä käyttäjät menuun
+	var $usercount 	= $(".user-count");
+	var $usermenu 			= $("li#userlista-menuitem").find(".nav-second-level #newUser");
+	var $usermenuPassive 	= $("li#userlista-menuitem").find(".nav-third-level");
+	IOclient.on("users.list", function(_users){
+		
+		$(".usritm-lnk").remove();
+		userlist = _.sortBy(_users, "yhteystiedot.nimi.etu")
+		$usermenu.find(".usritm-lnk").remove();
+		userlist.forEach(function(usr){
+			if(usr.aktiivinen == true)
+				$("<li class='usritm-lnk status-active'><a class='nav-label' href='/user/edit/"+usr._id+"'>"+usr.yhteystiedot.nimi.etu+" "+usr.yhteystiedot.nimi.suku+"</a></li>").insertAfter($usermenu)
+				
+			else
+				$usermenuPassive.append($("<li class='usritm-lnk status-inactive'><a class='nav-label' href='/user/edit/"+usr._id+"'>"+usr.yhteystiedot.nimi.etu+" "+usr.yhteystiedot.nimi.suku+"</a></li>"));
+		});
+		$usercount.text($(".usritm-lnk.status-active").length);
+	});
+
+	// Päivitä asiakkaas menuun
+	var $customercount 	= $(".customer-count");
+	var $customermenu 	= $("li#customerlista-menuitem").find(".nav-second-level");
+	IOclient.on("customer.list", function(_customers){
+		$(".csritm").remove()
+		$customercount.text(_customers.length);
+		customerlist = _.sortBy(_customers, "nimi")
+		$customermenu.find(".csritm-lnk").remove();
+		customerlist.forEach(function(csr){
+			$customermenu.append($("<li class='csritm-lnk' data-id='"+csr._id+"'><a class='nav-label' href='/customer/edit/"+csr._id+"'>"+csr.nimi+"</a></li>"));
+		});
+	});
+
+	
+	// Serveri lähettää notifyn userille
+	IOclient.on("NOTIFY", function(notify){
+		if($("#note_"+notify._id).length== 0){
+			var $note 		= $("<div id='note_"+notify._id+"' data-id='"+notify._id+"' class='note "+(notify.tyyppi || "info") +"'><span class='time'>"+moment(notify.aika).format("DD.MM.YYYY HH:mm")+"</span><h4>"+notify.otsikko+"</h4><p>"+notify.sisalto+"</p></div>")
+			var $kuittaa 	= $("<button class='close'>Kuittaa luetuksi</button>");
+			
+			if(notify.eiLuettu == true) 
+				$note.addClass("unread");
+			
+			if(notify.eiNahty === true){
+				$note.addClass("unseen");
+				if(notify.eiPopupped === true){
+					toastr[notify.tyyppi](notify.sisalto,notify.otsikko);
+					IOclient.emit("popupped", notify._id)
+				}
+			}
+			
+			$note.append($kuittaa);
+			$note.prependTo($(".notifys"));
+			$kuittaa.on("click", function(){
+				var $n = $(this).closest(".note");
+				
+				updateNotifyToRead($n.data("id"));
+				
+				$n.fadeOut(function(){
+					$(this).remove();
+					updateNotifyCounter();
+				});
+			});
+			updateNotifyCounter();
+		}
+		
+	});
+	
+	IOclient.on("joined", function(){
+		IOuser.joined = true;
+		IOclient.emit("req.users.list");
+		IOclient.emit("req.customer.list");
+	});
+
+
+	IOclient.on("campaign.active", function(data){
+		activeCampaignItem(data)
+	});
+	
+	IOclient.on("user.attach", function(data){
+	
+		// Lisää kampanja soittolistaan jos ei olemassa
+		var $c = $('#'+data.campaign._id+'-menulink');
+		
+		if($c.length == 0){
+			var $campMenuItem = $('<li class="soittolista-link" id="'+data.campaign._id+'-menulink"><a href="/campaign/view/'+data.campaign._id+'">'+data.campaign.nimi+'<span class="label label-info pull-right call-count">'+data.totalCalls+'<i></span></a></li>')
+			$campMenuItem.appendTo($("#soittolista-menuitem .nav-second-level")).fadeIn();
+		}
+		else {
+		
+			$c.find(".call-count").text(parseInt($c.find(".call-count").text())+data.totalCalls);
+			
+		}
+	});
+	
+	if(userlevel > 2) {
+		
+		IOclient.on("customer.add", function(data){
+			toastr['success']("Uusi asiakas \"<strong>"+data.obj.nimi+"</strong>\" luotu.", "Ilmoitus")
+			IOclient.emit("req.customer.list");
+		});
+		
+		IOclient.on("customer.del", function(data){
+			toastr['success']("Asiakas \"<strong>"+data.nimi+"</strong>\" on poistettu.", "Ilmoitus")
+			IOclient.emit("req.customer.list");
+		});
+	}
+	
+	function activeCampaignItem(data){
+		
+		$("#menu-campaign-"+data.id+".camp-edit-link").toggleClass("status-active status-inactive");
+		
+		if(data.value === false){
+			$("#"+data.id+"-menulink").addClass("hidden");
+			$("#menu-campaign-"+data.id+".camp-edit-link").appendTo($("#passiveCamps"))
+		}
+		else{
+			$("#"+data.id+"-menulink").removeClass("hidden");
+			$("#menu-campaign-"+data.id+".camp-edit-link").insertAfter($("#newCamp"))
+		}
+		$("#allcamps").closest("#kampanjalist-menuitem").find(".campaign-count").text($(".camp-edit-link.status-active").length);
+
+		updateCallListCount();
+	}

@@ -1,0 +1,178 @@
+li#camp-creator
+	button.expand
+		span
+	h3.campaign-nimi Lisää uusi kampanja
+	.details.row
+		
+		.col-lg-6
+			form#new-campaign-details
+				label(for='campaign-name') Kampanjan nimi
+				input#campaign-name.form-control(type='text', name='nimi')
+				label(for='alkaa') Kampanjan aloituspäivä
+				input#alkaa(type="hidden" name="alkaa")
+				.row: .col-xs-12
+					#start-date
+				label(for='customerID') Liitä asiakkaaseen
+				select#customer-id-select.form-control(name="customerID")
+					for customer in customers
+						option(value='#{customer._id}')= customer.nimi
+				label(for='provisio') Provisio €
+					input#provisio.form-control(type='tel' name='provisio' value='0.00')
+			hr
+			form#campaignUploader(action="/campaign/upload", method="post", enctype="multipart/form-data")
+				input#upload-input.hidden( type="file", name="customerDatabase")
+			a.btn.blue(href="/asiakasrekisteri.xls" download="asiakasrekisteri.xls")
+				i.fa.fa-download
+				|  Lataa malli asiakasrekisteristä
+			button#upload-btn.btn.green
+				i.fa.fa-upload
+				|  Lähetä asiakasrekisteri
+			#upload-status
+		.col-lg-6
+			label(for='kuvaus') Kampanjan ohjeistus
+			textarea.kuvaus.form-control.textarea(name='kuvaus' cols='40', rows='17')
+		.col-xs-12.hidden.added-customers
+			hr
+			h4 Tiedot ladatusta rekisteristä
+			br
+			include campaign-table
+			button#save-campaign.btn.green.disabled
+				i.fa.fa-save
+				|  Luo kampanja
+script.
+
+	var currentCampaignID = "";
+	$("#upload-btn").off("click").on("click", function(){
+		$("#upload-input").click();
+	});
+
+	$("#upload-input").off("change").on("change", function(e){
+		$('#campaignUploader').submit();
+		
+	});
+	
+	$("#campaign-name").off("input paste change").on("input paste.change", function(){
+		campaignValidator();
+	})
+	
+	$('#campaignUploader').off("submit").submit(function(e) {
+		e.preventDefault();
+		$(".uploader").fadeOut();
+		
+		$("#upload-status").empty().text("Lähetetään tiedostoa...");
+	
+		$(this).ajaxSubmit({
+			dataType:"json",
+			error: function(xhr) {
+				status('Error: ' + xhr.status);
+				$(".uploader").fadeIn();
+			},
+			success: function(response) {
+				console.log(response)
+				$("#upload-status").empty();
+				$("#campaignUploader").resetForm();
+				currentCampaignID = response._id;
+							
+				$cdiv = $(".campaign-item-content");
+				$.ajax({
+					type:"POST",
+					url:"/campaign/getItems", 
+					data: {
+						id:response._id
+					},
+					dataType:"json",
+					success: function(resp){
+														
+						var i = 0;
+						resp.forEach(function(ci){
+							if(i == 0){
+								var keys = ci.keys;
+								keys.reverse();
+								keys.forEach(function(key){
+									$(".campaign-header").prepend($("<td class='key_"+key+"'>"+key+"</td>"))
+								});
+							}
+							var $row = $("<tr id='campaign-item-"+ci._id+"'></tr>")
+							ci.payload.forEach(function(payload){
+								$row.append($("<td>"+payload.value+"</td>"))
+							})
+							var $rmBtn = $('<td class="text-center"><button><i class="fa fa-close"></i></button></td>');
+							$rmBtn.on("click", function(){
+								
+								removeCampaignItem(ci._id, currentCampaignID, function(resp){
+									
+										if(resp.status == true)
+										$row.fadeOut(function(){
+											$row.remove();
+											campaignValidator();
+											
+										});
+								});
+								
+								
+							});
+							$row.append($rmBtn);
+							$row.appendTo($cdiv);
+							i++;
+						});
+						$(".added-customers").removeClass("hidden");
+						campaignValidator();
+					}
+				})
+					
+				
+				
+			}
+		});
+	});
+	
+	function campaignValidator() {
+		if($(".campaign-item-content tr").length < 1) return false;
+		if($("#new-campaign-details #campaign-name").val().length < 1) return false;
+		
+		$("#save-campaign").removeClass("disabled");
+		return true;
+	}
+	
+	$("#save-campaign").off("click").on("click", function(e){
+		if(!$(this).hasClass("disabled")){
+		
+			e.preventDefault();
+			
+			$.ajax({
+				type:"POST",
+				url:"campaign/saveDetails",
+				data:{nimi:$("#campaign-name").val(),customerName:$("#customer-id-select option:selected").text(), alkaa:$("#alkaa").val(), customerID:$("#customer-id-select").val(),kuvaus:$(".kuvaus")[0].value, campaignID:currentCampaignID},
+				dataType:"json",
+				success:function(response){
+					updateCampaingList(true, function(){
+						$("#new-campaign-details").resetForm();
+						$("tbody.campaign-item-content tr").remove();
+						$("tr.campaign-header").not(".rm").remove();
+						$(".added-customers").addClass("hidden");
+						$("#camp-creator .expand").click();
+						$(".no-item").addClass("hidden");
+					});
+					//console.log(response);
+				}
+			})
+		}
+	})
+	$("#start-date").datetimepicker({
+		locale:		"fi",
+		inline: 	true,
+		sideBySide: true,
+		minDate: 	new Date(),
+		icons : {
+			time: 	"fa fa-clock-o",
+			date: 	"fa fa-calendar",
+			up: 	"fa fa-arrow-up",
+			down: 	"fa fa-arrow-down",
+			next:	"fa fa-arrow-right", 
+			previous:	"fa fa-arrow-left", 
+		},
+	});
+	$('#alkaa').val(new Date());
+	$('#start-date').datetimepicker().on('dp.change', function (ev) {
+		$('#alkaa').val(ev.date._d);
+	});

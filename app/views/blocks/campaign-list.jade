@@ -1,0 +1,109 @@
+li#campaign-item-template.hidden
+    button.expand
+      span
+    span.short-details
+      h3#campaign-nimi.campaign-nimi
+      strong: span#customerName
+      span  / 
+        span.campaignItemsNoSharedCount <i class="fa fa-fw fa-spinner fa-pulse"></i>
+        span jakamatonta kohdetta
+    .details.row
+      .col-lg-6
+        p
+          span.campaignItemsNoSharedCount
+          span  jakamatonta kohdetta
+          br
+          | <span class="campaignItemsSharedCount">0</span> jaettua kohdetta
+          br
+          strong.paatokset
+          span  päätöstä
+        label(for='nimi') Kampanjan nimi
+          .dbConn(data-target="campaign")
+            input#nimi.form-control(type='text', name='nimi')
+        label(for='alkaa') Kampanjan aloituspäivä
+        input.alkaa.form-control.cal(type='text', name='alkaa')  
+        label(for='customerID') Asiakas
+        select#customer-id-select.form-control(name="customerID")
+          for customer in customers
+            option(value='#{customer._id}')= customer.nimi
+        label(for='provisio') Provisio €
+          .dbConn(data-target="campaign")
+            input#provisio.form-control(type='tel' name='provisio')
+        hr
+        button#download-camp.submit.green
+          i.fa.fa-download.fa-fw
+          | Lataa rekisteri
+        button#remove-camp.submit.red
+          i.fa.fa-trash.fa-fw
+          | Poista kampanja
+      .col-lg-6
+        label(for='x') Kampanjan ohjeistus
+        textarea#desc.form-control.textarea(cols='40', rows='17')
+      .col-xs-12.progress-details
+        hr
+        //.row: .col-xs-12
+          //button.expand.expand-sm.disabled
+            //span
+          //.short-details
+            //h4 Lisää soitettava kampanjaan
+          //.details.row
+            //form.new-campaignItem-table
+            //.col-xs-12.col-md-6
+              //button.submit.addNewCampaignItem
+                //i.fa.fa-save
+                //|  Lisää
+        //br
+        .row: .col-xs-12.appender
+          button.expand.expand-sm.append-register
+            span
+          .short-details
+            h4 Lähetä asiakasrekisteri
+          .details.row
+            form#campaignUploader(action="/campaign/append", method="post", enctype="multipart/form-data")
+              input#upload-input.hidden( type="file", name="customerDatabase")
+            .col-xs-12#upload-status
+              h4: small Lähetetään tiedostoa...
+              table
+                thead
+                  tr.campaign-head
+                    td.rm Poista
+                tbody.campaign-item-contents
+        hr
+        h4 Edistymisen seuranta / töiden jakaminen
+        br
+        .row: .col-xs-12
+          .rausku-checkbox.es-only Näytä vain soittamattomat
+        .row: .col-xs-12
+          .rausku-checkbox.unshared-only Näytä vain jakamattomat
+        br
+        table#statuses.tablesorter.table-hover
+          thead
+            tr
+              th
+                input.select-all(type='checkbox')
+              th Yrityksen nimi
+              th Käyttäjäliitos
+              th Status
+              th.text-right.sorter-false Poista
+          tbody.campaign-progress-items
+         hr
+        .row: .col-xs-12
+          h4 Liitetyt soittajat
+          br
+          table.table.table-hover.attach-user-list
+            thead
+              td Soittaja
+              td.text-right Liitokset
+              td.text-right Poista liitokset (ei toimi vielä)
+            tbody
+        .row
+          .col-md-6
+            h4 Jaa soittajalle			
+            select.myyjat-select.form-control
+              option
+                for user in users
+                  option(value='#{user._id}')= user.yhteystiedot.nimi.etu + " " +user.yhteystiedot.nimi.suku
+          .col-md-6
+            button.attach-user.btn.green.disabled
+              i.fa.fa-save
+              |  Liitä käyttäjälle

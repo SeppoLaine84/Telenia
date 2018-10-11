@@ -1,0 +1,34 @@
+#siteSettings
+	li.gray-bg: div.padding-10 Kirjautuminen
+	li.list-group-item
+		input.form-control.autosave(name="username" data-updateTarget='login' data-dbKey='username' data-type='text' placeholder="Käyttäjätunnus") 	
+	
+	li.list-group-item
+		input.form-control(name="pwd" data-updateTarget='login' data-dbKey='pwd' data-type='pwd' type='password' placeholder="Salasana") 
+	
+	li.gray-bg: div.padding-10 Teema
+	li.list-group-item
+		label(for="backgroundColor") Taustaväri
+		.input-group.colorpicker-component.colorpick(data-dbKey='pageBody' data-dbSubKey='background')
+			input.form-control(name="backgroundColor" type="text" value="#{cPage.customizations.pageBody.background}") 
+			span.input-group-addon
+				i
+	li.list-group-item
+		label(for="color") Tekstin väri
+		.input-group.colorpicker-component.colorpick(data-dbKey='pageBody' data-dbSubKey='color')
+			input.form-control(name="color" type="text" value="#{cPage.customizations.pageBody.color}") 
+			span.input-group-addon
+				i
+				
+	li.gray-bg: div.padding-10 Lomakkeen kentät
+	li.list-group-item
+		each key in cPage.meta.campaign.keys
+			- var k = key.name.replace(' ','_');
+			- var e  = '';if(key.enabled) e ='checked';
+			
+			.form-group
+				label(for="MenuKey-#{k}")= key.name
+				input.pull-right.toggleKey(id="MenuKey-#{k}" data-keyid="#{key.id}" data-target="ckey-#{k}" name="MenuKey-#{k}" checked="#{e}" type='checkbox') 
+		
+
+	

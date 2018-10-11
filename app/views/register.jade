@@ -1,0 +1,67 @@
+extends layout
+block content
+	.container#page-wrapper
+		.ibox
+			.ibox-title: h1 Luo asiakastunnukset
+				br/
+				small: small: a(href="/") Alkuun
+		.ibox-container
+			form#register-form(method="POST" action="/client/register")
+				.col-lg-6
+					legend Yhteystiedot
+					label(for="nimi") Yrityksen nimi
+					input.form-control(type="text" name="nimi" value="")
+					label(for="vat") Y-Tunnus
+					input.form-control(type="tel" name="vat" value="")
+			
+					label(for='yhteystiedot.nimi') Yhteyshenkilön nimi
+					input.form-control(type='text' id='yhteystiedot.nimi'  name='yhteystiedot.nimi' value='')
+					label(for='yhteystiedot.puhelin') Puhelin
+					input.form-control(type='tel' id='yhteystiedot.puhelin' name='yhteystiedot.puhelin' value='')
+					label(for='yhteystiedot.osoite.katu') Katuosoite
+					input.form-control(type='text' id='yhteystiedot.osoite.katu'  name='yhteystiedot.osoite.katu' value='')
+					label(for='yhteystiedot.osoite.postinro') Postinumero
+					input.form-control(type='text' id='yhteystiedot.osoite.postinro'  name='yhteystiedot.osoite.postinro' value='')
+					label(for='yhteystiedot.osoite.kunta') Postitoimipaikka
+					input.form-control(type='text' id='yhteystiedot.osoite.kunta' name='yhteystiedot.osoite.kunta' value='')
+				.col-lg-6
+					legend Pääkäyttäjän kirjautumistiedot
+					label(for='user_email') Sähköposti
+					input.form-control(type='email' name='user_email' value='')
+					label(for='user_pwd') Salasana
+					input.form-control(type='password' name='user_pwd' value='')
+					.form-group(style='margin-top:10px')
+						button.submit.registrer.btn.btn-info(tyoe='submit')
+							i.fa.fa-user-plus
+							|  Rekisteröidy
+	include scripts
+	script.
+		$("#register-form").on("submit", function(e){
+			var res = {}
+			data = $("#register-form").serializeArray().forEach(function(a){
+				res[a.name] = a.value;
+			});;
+		
+			e.preventDefault();
+			$.ajax({type:"POST",dataType:"JSON",url:"/client/register",data:res, success: function(resp){
+			
+				if(resp){
+					if(resp.status){
+						if(resp.status === false){
+						
+							var er = resp.errors.join(', ')
+							toastr('warning')(er, "Virheitä")
+						}else {
+							console.log(resp.errors)
+							toastr('success')("Asiakas luotu onnistuneesti", "Asiakkaan luonti.")
+						}
+					}
+					else {
+						console.log(resp.errors)
+						toastr('success')("Asiakas luotu onnistuneesti")
+					} 
+						
+				}
+				
+			}});
+		});

@@ -1,0 +1,113 @@
+nav.navbar-default.navbar-static-side(role='navigation')
+  .sidebar-collapse
+    ul#side-menu.nav.metismenu
+      li.nav-header
+        .dropdown.profile-element
+          img.header-logo(alt='#{appSettings.name}', src='/images/logo.png')
+          a.dropdown-toggle(data-toggle='dropdown', href='#')
+            span.clear
+              span.block.m-t-xs
+                if(user)
+                  if(user.yhteystiedot)
+                  if(user.yhteystiedot.nimi.etu && user.yhteystiedot.nimi.suku)
+                    strong.font-bold= user.yhteystiedot.nimi.etu + " " + user.yhteystiedot.nimi.suku
+                  else
+                    strong.font-bold= user.email
+                  if(user.clientName)
+                    span.text-muted.text-xs.block= user.clientName
+        .logo-element
+          img(alt='#{appSettings.name}', src='/images/logo_pieni.png')
+      ul.nav.mainmenu.hidden.animated
+        li
+          a(href='/aloitus')
+            i.fa.fa-home
+            span.nav-label Etusivu
+        if(user.userlevel > 1)
+          li#kampanjalist-menuitem
+            a(href='/campaign/edit/')
+              i.fa.fa-calendar
+              span.nav-label Kampanjat
+              span.label.label-primary.pull-right.campaign-count 
+                i.fa.fa-pulse.fa-spinner(style='margin-right:0')
+            ul#allcamps.nav.nav-second-level.collapse
+                 li#newCamp: a.nav-label(href="/campaign/new")
+                   i.fa.fa-plus.fa-fw
+                   | Luo uusi kampanja
+                 li
+                   a(href="#") Passiiviset kampanjat
+                     span.fa.arrow
+                   ul#passiveCamps.nav.nav-third-level.collapse
+        li#soittolista-menuitem
+          a(href='/campaign/view/')
+            i.fa.fa-book
+            span.nav-label Soittolista
+            span.label.label-primary.pull-right.calls-count
+              i.fa.fa-pulse.fa-spinner(style='margin-right:0')
+          ul.nav.nav-second-level.collapse
+        if(user.userlevel > 1)
+          li#userlista-menuitem
+            a(href='/user')
+              i.fa.fa-user
+              span.nav-label Käyttäjät
+              span.label.label-primary.pull-right.user-count
+                span.count
+                  i.fa.fa-pulse.fa-spinner(style='margin-right:0')
+            ul.nav.nav-second-level.collapse
+                li#newUser: a.nav-label(href="/user/luo")
+                  i.fa.fa-plus.fa-fw
+                  | Luo uusi käyttäjä
+                li
+                  a(href="#") Passiiviset käyttäjät
+                    span.fa.arrow
+                  ul#passiveUsers.nav.nav-third-level.collapse
+        if(user.userlevel > 2)				  
+          li#customerlista-menuitem
+            a(href='/customer')
+              i.fa.fa-diamond
+              span.nav-label Asiakkaat
+              span.label.label-primary.pull-right.customer-count
+                i.fa.fa-pulse.fa-spinner(style='margin-right:0')
+            ul.nav.nav-second-level.collapse
+              li: a.nav-label(href="/customer/add")
+                i.fa.fa-user-plus.fa-fw
+                | Luo uusi asiakas
+        li#userlista-menuitem
+          a(href='/user/edit/#{user._id}')
+            i.fa.fa-user
+            span.nav-label Omat tiedot
+        
+        li
+          a(href='/report')
+            i.fa.fa-bar-chart
+            span.nav-label Raportointi
+            span.fa.arrow
+          ul.nav.nav-second-level.collapse
+            if(user.userlevel > 1)
+              
+              li
+                a(href='/report/customer') 
+                  i.fa.fa-diamond.fa-fw
+                  | Asiakkaat
+              li
+                a(href='/report/beta')
+                  i.fa.fa-calendar.fa-fw
+                  | Kampanja
+              li
+                a(href='/report/orders') 
+                  i.fa.fa-shopping-cart.fa-fw
+                  | Tilaukset
+              //li
+                //a(href='/report/user') 
+                  //i.fa.fa-users.fa-fw
+                  //| Myyjät
+        li.signoff
+          a(href='/user/logoutReport')
+            i.fa.fa-power-off
+            span.nav-label Kirjaudu ulos
+        hr
+        #msg-center
+          h3 Viestikeskus
+          ul#msg-container
+            .notifys
+a.navbar-minimalize.minimalize-styl-2.btn.btn-primary(href='#')
+  i.fa.fa-bars

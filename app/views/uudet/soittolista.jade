@@ -1,0 +1,431 @@
+extends ../layout
+block content
+	#page-wrapper.white-bg
+		.row.wrapper.border-bottom.white-bg.page-heading
+			h1
+				i.fa.fa-spinner.fa-pulse.fa-fw.page-title-icon
+				span.page-title= loadingText
+				.clearfix
+				p.item-count &nbsp;
+					span.label.label-primary.label-status.bg-es.status-es ES 
+						span.count x0
+					span.label.label-primary.label-status.bg-ok.status-ok OK 
+						span.count x0
+					span.label.label-primary.label-status.bg-ei.status-ei EI 
+						span.count x0
+					span.label.label-primary.label-status.bg-ev.status-ev EV 
+						span.count x0
+					span.label.label-primary.label-status.bg-su.status-su SU 
+						span.count x0
+					span.label.label-primary.label-status.bg-tj.status-tj TJ 
+						span.count x0
+					span.label.label-primary.label-status.bg-v.status-v V 
+						span.count x0
+		.wrapper-content
+			.row
+				#main-content.col-xs-12
+					include call-list
+
+block content-scripts
+	script.
+		var payloadToFocus = "#{payloadToFocus}" ;
+	
+		
+		$(".panel-title").on("click", function(){
+			$(this).closest(".payload-item").find(".panel-body form").toggleClass("no-display");
+			$('.panel-group').isotope('layout');
+			$(window).scrollTo($(this),300);
+			
+		});
+		
+		var userlvl 		= #{user.userlevel};
+		var campaignInfo 	= !{JSON.stringify(campaign)};
+
+		toastr.options = {
+			"closeButton": false,
+			"debug": false,
+			"newestOnTop": true,
+			"progressBar": false,
+			"positionClass": "toast-top-right",
+			"preventDuplicates":true,
+			"onclick": null,
+			"showDuration": "300",
+			"hideDuration": "1000",
+			"timeOut": "5000",
+			"extendedTimeOut": "1000",
+			"showEasing": "swing",
+			"hideEasing": "linear",
+			"showMethod": "fadeIn",
+			"hideMethod": "fadeOut"
+		}
+	
+		
+		if(userlvl < 4){
+			var $grid = $('.panel-group').isotope({
+			
+				itemSelector: 		'.payload-item',
+				percentPosition: 	true,
+				layoutMode: 		'vertical',
+				resizesContainer: 	true,
+				masonry: {
+					columnWidth: '.payload-item'
+				},
+				getSortData: {
+					status: function(itm){
+						return $(itm).data('status');
+					}, 
+					calls: 	function(itm){
+						return $(itm).data('calls');
+					}, 	
+				},
+				sortBy:['status', 'calls'],
+				sortAscending: {
+					status: false, 
+					calls: 	false,
+				},
+				isInitLayout: false,
+			})
+			
+			
+			
+			$grid.one("arrangeComplete", function(){
+				$(".payload-item").removeClass("hidden")
+				$grid.isotope('layout');
+							
+				if($focus != null){
+					$("body").scrollTo($focus, 300);
+				}
+			});
+			
+			var $focus = null;
+			if(payloadToFocus){
+				$focus = $("#payload-"+payloadToFocus);
+				$focus.find(".payload-datas.details").removeClass("no-display");
+			}
+			
+			$grid.isotope('arrange')
+					
+			IOclient.on("campaign.active", function(data){
+				if(data.id.toString() == campaignInfo._id.toString()){
+				
+					swal({
+						title: "Huomio!",
+						text: "Kampanja on passivoitu, sinut ohjataan etusivulle...",
+						type: "info",
+						showCancelButton: false,
+						showConfirmButton: true,
+						confirmButtonColor: "#DD6B55",
+						confirmButtonText: "OK",
+						
+						
+						}).then(function () {
+							
+							$("body").css('background-color','#102A30').find("#wrapper").fadeOut(600, function(){
+								document.location ="/aloitus";
+							});
+						});
+					
+					
+				}
+			});
+			var defDate = new Date();
+			
+			$('.callAgainDialog').datetimepicker({
+				locale:		"fi",
+				inline: 	true,
+				defaultDate:defDate,
+				minDate:	defDate,
+				sideBySide: true,
+				icons : {
+						time: 		"fa fa-clock-o",
+						date: 		"fa fa-calendar",
+						up: 		"fa fa-arrow-up",
+						down: 		"fa fa-arrow-down",
+						next:		"fa fa-arrow-right", 
+						previous:	"fa fa-arrow-left", 
+						clock: 		"fa fa-clock",
+						close:		"fa fa-times",
+				},	
+			});
+			
+			$(".callAgainDialog").on("dp.change", function (e) {
+				$(this).closest(".payload-datas").find(".kuittaus").removeClass("disabled");
+			});
+				
+			$.ajax({
+				type: 		"POST",
+				url: 		"/campaign/statuses/get",
+				dataType: 	"json",
+				data: {
+					campaignID: "#{campaign._id}",
+					type: 		"user",
+				},
+				success: function(statuses){
+			
+					var cid 		= statuses.kampanjaID.toString();
+					if(statuses.totalCount > 0){
+											
+						var $campaign 	= $(".item-count");
+												
+						Object.keys(statuses.counts).forEach(function(stat){
+							$campaign.find(".status-"+stat.toLowerCase()+ " .count").text("x" + statuses.counts[stat]);
+						});
+						
+					}
+				
+				},
+				
+			});
+		
+			$(".save-new-item").on("click", function(){
+				var data 	= JSON.stringify($(".new-campaing-item form").serializeArray());
+				var _self 	= $(this);
+				$.ajax({
+					url:"/campaignItem/add",
+					dataType:"JSON",
+					type:"POST",
+					data:{
+						kampanjaID: campaignInfo._id,
+						payload:data,
+					},
+					success:function(resp){
+						if(resp.status == true){
+							
+							$itm = $(_self).closest(".new-campaing-item").clone();
+							$(_self).closest(".new-campaing-item").find(".panel-body").addClass("no-display");
+							$itm.removeClass(".new-campaing-item");
+							var itemName 	= $itm.find(".payloads input").first().val();
+							var itemPhone 	= $itm.find(".payloads input[name='puhelinnumero']").val();
+							$itm.data("status","ES")
+							$itm.find(".payload-name").text(itemName);
+							$itm.find(".pnum").text(itemPhone);
+							$itm.find(".panel-footer").removeClass("hidden")
+							$itm.find(".kuittaus-buttons").removeClass("hidden")
+							$itm.find(".callAgainDialog").removeClass("hidden")
+							$itm.find(".save-new-item").addClass("hidden")
+							$itm.find(".kuittaus").removeClass("hidden").data("plid", resp.item._id)
+							$itm.find(".panel-status").removeClass("bg-vihrea").addClass("bg-es").text("ES");
+							
+							$('.panel-group').isotope( 'insert', $itm );
+							
+							$grid.one('arrangeComplete', function(){
+								$(window).scrollTo($itm, 300);
+							});
+							
+							
+							//$itm.find(".payload-name").text(itemName)
+							
+						}
+						//location.reload();
+						
+					},
+					
+				})
+			});
+			
+			$(document).ready(function(){
+						
+				setInterval(function(){
+					$(".callAgainTimeString").toArray().forEach(function(time){
+						if($(time).data("time")){
+							var t = $(time).data("time");
+							var s = moment(new Date(t)).locale("fi").fromNow();
+							$(time).text(s);
+						}
+					})
+				}, 30000);
+			});
+			var currentStatus 	= "";
+			var okCallAgain 	= false;
+			
+			// Kuittaus buttonin klikkaus
+			$('body').on("click", ".kuittaus-buttons button", function(){
+				
+				currentStatus = $(this).text();
+		
+				if(currentStatus == "SU" || (currentStatus == "OK" && campaignInfo.soitauudestaanOK === true)){
+					$(".kuittaus-buttons button").removeClass("active");
+					$(this).addClass("active");
+					if(currentStatus == "SU")
+						$(this).closest(".payload-datas").find(".kuittaus").addClass("disabled");
+					else
+						$(this).closest(".payload-datas").find(".kuittaus").removeClass("disabled");
+					
+					var $callDlg 	= $(this).closest(".more-info").find(".callAgainDialog");
+					
+					if($callDlg)  {
+						if($callDlg.data("maxdate")){
+							var maxDate 	= $callDlg.data("maxdate").split(" ");
+							var b 			= moment().add(maxDate[0], maxDate[1]);
+							$callDlg.data("DateTimePicker").maxDate(b)
+							$callDlg.one("dp.change", function(e){
+								okCallAgain = true;
+							});
+							$callDlg.slideDown("fast");
+						}else {
+							
+							$callDlg.one("dp.change", function(e){
+								okCallAgain = true;
+							});
+							$callDlg.slideDown("fast");
+						}
+					}
+					else {
+						IOclient.emit("clientERR", "Uudelleensoitto dialogia ei löytynynt?!");
+						
+					}
+					
+				}
+				else {
+					$(this).closest(".more-info").find(".callAgainDialog").slideUp("fast");
+					$(".kuittaus-buttons button").removeClass("active");
+					$(this).addClass("active");
+					$(this).closest(".payload-datas").find(".kuittaus").removeClass("disabled");
+				
+					
+				}
+			});
+			
+
+		
+			$("body").on('click', '.kuittaus', function(e) {
+				
+				if(currentStatus != ""){
+					$(this).addClass("disabled");
+					var $ci	= $(this).closest(".panel");
+					
+					var oldStatus = $ci.data("status");
+					
+					$(".kuittaus-buttons button.active").removeClass("active");
+					
+					var campaignItemID 	= $(this).data("plid");
+					var desc 			= $(this).closest(".details").find("#desc").val();
+					var details 		= $(this).closest(".details").serializeArray();
+				
+					
+					$.ajax({
+						url:		"/campaignItem/update",
+						type:		"POST",
+						dataType:	"JSON",
+						data:		{id:campaignItemID, status:currentStatus, payload:JSON.stringify(details), report:desc },
+						success:function(resp){
+							
+							$ci.find(".panel-status").text(currentStatus).removeClass().addClass("panel-status bg-"+ currentStatus.toLowerCase());
+							$ci.data("status", currentStatus);
+							var d  		= $ci.find(".callAgainDialog").data("DateTimePicker").date();
+					
+							// Päivitä status määrä yläpalkissa, bugaa varmaan
+							var _count =  parseInt($(".status-"+currentStatus.toLowerCase()+ " .count").text().replace("x", ""))+1;
+							$(".status-"+currentStatus.toLowerCase()+ " .count").text("x"+_count)
+							
+							var _oldCount =  parseInt($(".status-"+oldStatus.toLowerCase()+ " .count").text().replace("x", ""))-1;
+							$(".status-"+oldStatus.toLowerCase()+ " .count").text("x"+_oldCount)
+							
+							var sortIsotope = true;					
+							if(_.contains(["ES", "EV", "SU", "OK"], currentStatus)){
+									if (currentStatus == "OK" && okCallAgain == false){
+											$ci.addClass("hidden kuitattu");
+									}
+									else{
+										$(".payload-item").removeClass("hidden");
+																	
+										if(currentStatus == "EV"){
+											
+											
+											var $countElem 	= $ci.find(".call-count");
+											var callCount 	= parseInt($countElem.text());
+										
+											callCount++;
+											$ci.data("calls", callCount);
+											$countElem.text(callCount);
+											$ci.find(".callData.hidden").removeClass("hidden");
+											$ci.find(".callAgain").addClass("hidden");
+											$ci.find(".callTimes").prepend($("<strong>"+moment().format('DD.MM.YYYY HH:mm:ss')+"</strong><br/>"));
+											if(callCount >= 3){
+												$ci.addClass("hidden kuitattu");
+											}
+										
+										}
+										else if(currentStatus == "SU" || (currentStatus == "OK" && okCallAgain == true)){
+											
+											if(!$ci.find(".callAgainDialog").data("DateTimePicker")){
+												IOclient.emit("clientERR", "Ongelma uudelleen soitonlaittamisessa!!");
+												//toastr.error("<strong>" +error.toString()+ "</strong><br/>Päivitä sivu varmuuden vuoksi uudestaan.<br/><small>Ongelma on raportoitu automaattisesti.</small>", "Virhe ohjelmakoodissa!", {extendedTimeOut :0, timeOut:0, closeButton:true});  
+											}
+											
+												var d  		= $ci.find(".callAgainDialog").data("DateTimePicker").date();
+												sortIsotope = false;
+												okCallAgain	= false;
+												$.ajax({
+													url:		"/campaignItem/callAgain",
+													type:		"POST",
+													dataType:	"JSON",
+													data:		{id:campaignItemID, aika: d._d, report:desc },
+													success:function(resp){
+													
+														$ci.find(".callData.hidden").removeClass("hidden");
+														$ci.find(".callAgain").removeClass("hidden").find(".callAgainTime").text(moment(resp.result.soitaUudestaan).format("DD.MM.YYYY HH:mm"));
+														$ci.find(".callAgainTimeString").text(moment(resp.result.soitaUudestaan).locale("fi").fromNow());
+														$ci.find(".callTimes").prepend($("<strong>"+moment().format('DD.MM.YYYY HH:mm')+"</strong><br/>"));
+														var $countElem 	= $ci.find(".call-count");
+														var callCount 	= parseInt($countElem.text());
+														if(Number.isNaN(callCount))callCount = 0;
+														callCount++;
+														$countElem.text(callCount);
+														$ci.data("calls", callCount);
+														
+														var a = moment();
+														var b = moment(resp.result.soitaUudestaan);
+														var diffInHours = b.diff(a, 'hours');
+														
+														if(diffInHours >= 12)
+															$ci.addClass("hidden")
+														
+														$('.panel-group').isotope('updateSortData').isotope({sortBy:['status', 'calls'],});
+													},
+												});
+											
+										}
+									}
+							}
+							else {
+								$ci.addClass("hidden kuitattu");
+							}
+							currentStatus = "";
+							$ci.find(".payload-datas").addClass("no-display");
+							if(sortIsotope)
+								$('.panel-group').isotope('updateSortData').isotope({sortBy:['status', 'calls'],});
+						
+						},
+						error: function(err){
+							console.log(err);
+							
+						},
+					});
+				}
+			});
+		
+			
+			if($(".campaign-section").length <= 0){
+				$(".no-call-items").removeClass("hidden");
+				$(".no-call-items").fadeIn();
+			}
+			
+			$("input[name='www-sivut'], input[name='www-osoite'").toArray().forEach(function(webpage){
+				var $link = $("<a style='margin-left:16px' target='_blank' href='"+linkify($(webpage).val())+"'>Avaa sivu</a>");
+				$(webpage).parent().find("label[for='www-sivut'], label[for='www-osoite']").append($link);	
+				
+				if($(webpage).val().length == 0)
+					$link.addClass("hidden")
+			});
+			
+			
+			$("input[name='www-sivut'], input[name='www-osoite'").on('input paste', function(){
+				if($(this).val().length > 0)
+					$(this).parent().find("a").attr("href", linkify($(this).val())).removeClass("hidden")
+				else {
+					$(this).parent().find("a").attr("href", linkify($(this).val())).addClass("hidden")
+				}
+			})
+				
+		}

@@ -1,0 +1,389 @@
+extends ../adminLayout
+script(src="/js/plugins/chartJs/Chart.min.js")
+block content
+	#page-wrapper.gray-bg
+			.row.wrapper.border-bottom.white-bg.page-heading
+				.col-xs-12
+					h1
+						i.fa.fa-spinner.fa-pulse.fa-fw.page-title-icon
+						span.page-title= loadingText
+			.wrapper-content: .row: #main-content.col-xs-12
+				.row
+					.col-sm-12.col-md-3
+						.ibox
+							.ibox-content#userList
+								h4 Paikalla olevat käyttäjät 
+									span.badge.usersOnline
+								ul.list-group.clear-list.m-t
+									li.list-group-item.template.hidden
+										.float-e-margins
+											span.pull-right.userLevel 0
+										
+											span.label.label-primary
+												i.fa.fa-user
+											span
+												a.userName(href="")
+												br
+												span.text-muted.userClient(style='margin-left:35px')
+										
+										
+					-  proc.reverse()
+					each _pro in proc
+						-  var pro = _pro[0]
+						if(pro.name == "telenia")
+							.col-sm-12.col-md-3
+								.ibox
+									.ibox-content.process-box(data-id='#{pro.pm_id}')
+												
+										h4.text-bold.text-capitalize= pro.name
+										.row: .col-xs-12
+											small.pull-left KÄYNNISTETTY 
+											strong.started.pull-right= _moment(pro.pm2_env.pm_uptime).locale("fi").calendar()
+										.row: .col-xs-12
+											small.pull-left NODE_ENV 
+											strong.env.pull-right= nodeEnv
+										.row: .col-xs-12
+											small.pull-left KÄYNNISTYKSIÄ 
+											strong.restarts.pull-right= pro.pm2_env.restart_time
+										.row: .col-xs-12
+											small.pull-left PROSESSORIN KÄYTTÖ 
+											strong.cpu.pull-right= pro.monit.cpu+"%"
+										.row: .col-xs-12
+											small.pull-left MUISTI 
+											strong.mem.pull-right= formatBytes(pro.monit.memory)
+										hr
+										//button.btn.btn-primary.btn-sm.restartSoftware(data-id='#{pro.pm_id}') Käynnistä uudestaan
+					.col-xs-12.col-md-6
+						.ibox: .ibox-content
+							canvas#cpuUsageLiveChart(height="350px")
+				.row
+					.col-xs-12
+						.ibox#realtimeLog(style='overflow:hidden')
+							.ibox-title 
+								h4 Tapahtuma historia
+							.ibox-content
+								.row.log-entry.template(style='display:none'): .col-xs-12
+									.row
+										.col-sm-3.col-md-2.col-lg-1
+											span.label.loglevel
+											br
+											.row(style='margin-top:4px'): .col-xs-12
+												small
+													span versio 
+													span.text-center.version
+										.col-sm-9.col-md-10.col-lg-11
+											.row
+												.col-sm-12.col-md-2.col-lg-1
+													small.text-capitalize.timestamp
+												col-sm-12.col-md-10.col-lg-11
+													p.msg(style='width:100%')
+											.row.metaContainer.hidden
+												.col-xs-12
+													a.showMeta(href='#') Näytä META
+													p.meta.hidden
+							.ibox-footer: .row: .col-xs-12.text-center: h5.text-bold.infinityScroll.loading.hidden
+								i.fa.fa-circle-o-notch.fa-spin.fa-fw
+								span Ladataan lisää...
+block content-scripts	
+	script.
+		var prosecc 		= !{JSON.stringify(proc)};
+		var uls		 		= !{JSON.stringify(userlevelStrings)};
+		var gotInitialList 	= false;
+		var pageReady		= false;
+		var userList;
+		
+			
+		var cpuChartOptions = {
+			
+				datasetFill: true,
+				responsive:true,
+				animation : false,
+				maintainAspectRatio: false,
+			    scaleOverride : true,
+				scales: {
+					yAxes: [{
+						ticks: {
+							
+							min: 0,
+							
+							
+						}
+					}],
+					xAxes: [{
+						ticks:{
+							maxTicksLimit:10
+						},
+					}],
+				},
+		}
+
+		
+		IOclient.on("joined", function(){
+			$(".infinityScroll.loading").removeClass("hidden").fadeIn ('fast')
+			IOclient.emit("req.admin.log", {limit:0})
+			IOclient.emit("req.admin.user.list")
+			IOclient.emit("req.admin.system.info.history")
+		});
+		
+		var ctx = document.getElementById("cpuUsageLiveChart").getContext("2d");
+		var cpuChart;
+		
+		IOclient.on("admin.system.info.history", function(history){
+			var cpu = _.map(history, function(h){
+				return h.cpu
+			});
+			var mem = _.map(history, function(h){
+				return Math.ceil((h.mem / (1024*1024)))
+			});
+			var labels = _.map(history, function(h){
+				return moment(h.timestamp).format("HH:mm:ss")
+			});
+			
+			 
+			var data = {
+				labels: labels,
+				datasets: [
+					{
+						label: "Prosessorin käyttö",
+						fill: false,
+						lineTension: 0,
+						backgroundColor: "transparent",
+						borderColor: "#FE8C85",
+						borderWidth: 3,
+						borderCapStyle: 'butt',
+						borderDash: [],
+						borderDashOffset: 0,
+						borderJoinStyle: 'round',
+						pointBorderColor: "#FE8C85",
+						pointBackgroundColor: "#FE8C85",
+						pointBorderWidth: 10,
+						pointHoverRadius: 0,
+						pointHoverBackgroundColor: "transparent",
+						pointHoverBorderColor: "#FE8C85",
+						pointHoverBorderWidth: 10,
+						pointRadius: 0,
+						pointHitRadius: 10,
+						data: cpu,
+						
+					},{
+						label: "Muistin käyttö",
+						fill: false,
+						lineTension: 0,
+						backgroundColor: "transparent",
+						borderColor: "#858CFE",
+						borderWidth: 3,
+						borderCapStyle: 'butt',
+						borderDash: [],
+						borderDashOffset: 0,
+						borderJoinStyle: 'round',
+						pointBorderColor: "#FE8C85",
+						pointBackgroundColor: "#FE8C85",
+						pointBorderWidth: 10,
+						pointHoverRadius: 0,
+						pointHoverBackgroundColor: "transparent",
+						pointHoverBorderColor: "#FE8C85",
+						pointHoverBorderWidth: 10,
+						pointRadius: 0,
+						pointHitRadius: 10,
+						data: mem,
+						
+					},
+				]
+			};
+
+		
+			cpuChart = new Chart(ctx, {
+				type: 'line',
+				data: data,
+				options: cpuChartOptions
+			});
+			
+			setInterval(function(){
+				var pm_ids = [];
+				$(".process-box").toArray().forEach(function(process){
+					pm_ids.push($(process).data("id"))
+				});
+				
+				IOclient.emit("req.admin.process.info", pm_ids)
+				
+			}, 1000);
+		});
+		
+		var cpuIterator = 0;
+		var cpuAvg 		= 0;
+		IOclient.on("pm2.info", function(data){
+			data.descs.forEach(function(_proc){
+				var proc = _proc[0]
+				$(".process-box[data-id='"+proc.pm_id+"'] .cpu").text(proc.monit.cpu+"%")
+				$(".process-box[data-id='"+proc.pm_id+"'] .mem").text(formatBytes(proc.monit.memory))	
+				$(".process-box[data-id='"+proc.pm_id+"'] .started").text( moment(proc.pm2_env.pm_uptime).locale("fi").calendar().capitalizeFirstLetter())
+				$(".process-box[data-id='"+proc.pm_id+"'] .restarts").text(proc.pm2_env.restart_time)
+				
+				if(proc.name == "telenia"){
+					
+					if(proc.pid == 0){
+						$(".process-box[data-id='"+proc.pm_id+"'] .started").text("Sammutettu")
+					}
+					
+						
+					cpuChart.data.labels.push(moment().format("HH:mm:ss"))
+					cpuChart.data.datasets[0].data.push(proc.monit.cpu)
+					
+					cpuChart.data.datasets[1].data.push(Math.ceil((proc.monit.memory / (1024*1024))))
+					if(cpuChart.data.datasets[0].data.length >= 60){
+						cpuChart.data.datasets[0].data.shift()
+						cpuChart.data.datasets[1].data.shift()
+						cpuChart.data.labels.shift();
+					}
+					cpuChart.update()
+					
+		
+				}
+			});
+		});
+		
+		IOclient.on("USERS", function(_userList){
+			userList 		= _userList.users;
+			var $template 	= $(".list-group-item.template");
+			$(".usersOnline").text(_userList.userCount);
+			var i = 0;
+		
+			userList.forEach(function(_user){
+				if(_user.user)
+				if($(".list-group-item[data-socketid='"+_user.socketID+"']").length == 0){
+					var $item = $template.clone();
+					$item.attr("data-id", _user.user._id)
+					$item.attr("data-socketid", _user.socketID)
+					$item.find(".userName").text(_user.user.yhteystiedot.nimi.etu + " " +_user.user.yhteystiedot.nimi.suku).attr("href", "/user/edit/"+_user.user._id)
+					$item.find(".userLevel").text(uls[_user.user.userlevel])
+					$item.find(".userClient").text(_user.user.clientName)
+					$item.removeClass("template hidden");
+					if(i == _userList.userCount-1)
+						$item.addClass("fist-item")
+					i++;
+					$item.insertAfter($template);
+				}
+			});
+		});
+	
+		IOclient.on("disconnect", function(){
+			$(".list-group-item").not(".template").remove()
+			$(".usersOnline").text(0);
+		});
+	
+		IOclient.on("USERJOIN", function(__user){
+			var _user = __user.user;
+			
+			if($(".list-group-item[data-socketid='"+__user.socketID+"']").length == 0){
+				var $template 	= $(".list-group-item.template");
+				var $item = $template.clone();
+				$item.attr("data-id", _user._id)
+				$item.attr("data-socketid", __user.socketID)
+				$item.find(".userName").text(_user.yhteystiedot.nimi.etu + " " +_user.yhteystiedot.nimi.suku).attr("href", "/user/edit/"+_user._id)
+				$item.find(".userLevel").text(uls[_user.userlevel])
+				$item.find(".userClient").text(_user.clientName)
+				$item.removeClass("template hidden");
+				
+				$item.insertAfter($(".list-group-item").last());
+				if($(".list-group-item").not(".template").length == 1)
+					$item.addClass("fist-item");
+				$(".usersOnline").text($(".list-group-item").not(".template").length);
+			}
+			
+		});
+			
+		IOclient.on("USERLEFT", function(_client){
+			
+			var usrElem = $("[data-socketid='"+_client.socketID+"']").remove();
+			$(".usersOnline").text($(".list-group-item").not(".template").length);
+		});		
+		
+		/*
+			Raportti listaus
+		*/
+		
+		IOclient.on("admin.reports.all", function(reports){
+			console.log(reports)
+		});
+		
+		/*
+			Reaali-aikainen logi
+		*/
+		IOclient.on("admin.log.initial", function(data){
+			createLogElement(data,true, true)
+			pageReady = true;
+		});
+		
+		
+		var logStreamMeta = {limit:0,offset:0,total:0};
+		
+		IOclient.on("admin.log.meta", function(data){
+			logStreamMeta = data;
+			
+			IOclient.emit("req.admin.log", {limit:10, offset:0, sort:{timestamp:-1}})
+		});
+		
+		
+		
+		IOclient.on("admin.log.stream", function(data){
+		
+			createLogElement(data, false, false)
+		});
+		
+		IOclient.on("admin.log.append", function(data){
+			createLogElement(data, true, true)
+		});
+				
+		function createLogElement(aData, append, updateMetaData){
+			
+			if(updateMetaData){
+				logStreamMeta.limit = aData.limit;
+				logStreamMeta.total = aData.total;
+				logStreamMeta.offset = aData.offset;
+			}
+				
+			$(".infinityScroll.loading").fadeOut('fast')
+			//console.log("got meta: ", logStreamMeta)
+			aData.docs.forEach(function(log){
+			
+				//if(!_.contains(,  log.level)){
+					
+					var $log = $(".log-entry.template").clone();
+					$log.removeClass("template");
+					$log.find(".timestamp").text(moment(log.timestamp ||log.aika).locale("fi").calendar())
+					$log.find(".loglevel").text(log.level || log.userName ||"info").addClass("label-"+(log.level || "info"))
+					$log.find(".version").text(log.appVersion || "1.0")
+					$log.find(".msg").text(log.msg || log.message||log.data)
+					if(log.meta)
+					if(Object.keys(log.meta).length > 0){
+						$log.find(".meta").text(JSON.stringify(log.meta))
+						$log.find(".metaContainer").removeClass("hidden")
+						$log.find(".showMeta").on("click", function(e){
+							e.preventDefault();
+							$log.find(".meta").toggleClass("hidden");
+						});
+					}
+					if(append)
+						$("#realtimeLog .ibox-content").append($log.addClass("animated fadeInUp").css({display:"block"}));
+					else
+						$("#realtimeLog .ibox-content").prepend($log.addClass("animated fadeInDown").css({display:"block"}));
+				//}
+			});
+			loadingContent = false;
+		}
+		
+		// InfinityScroll
+		var page = 1;
+		var loadingContent = false;
+		$(window).scroll(function(e){
+			if(pageReady)
+			if(!loadingContent && ($(window).scrollTop() >= ($(document).height() - $(window).height()) - 15)){
+				page++;
+				$(".infinityScroll.loading").removeClass("hidden").fadeIn ('fast')
+				loadingContent = true;
+				IOclient.emit("req.admin.log", {limit:10, offset:(10*page), append:true, sort:{timestamp:-1}})
+			
+			}
+		
+		});
+		

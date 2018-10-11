@@ -1,0 +1,19 @@
+.predefinedDays
+	ul.nav.nav-tabs
+.tools
+	input.hidden.form-control(type='text' name='daterange' style='width:auto;margin-right:12px;')
+	.checkbox.checkbox-circle.checkbox-inline.checkbox-info
+		input#hideEmpty(type='checkbox')
+		label(for='hideEmpty') Piilota tyhjät
+	.checkbox.checkbox-circle.checkbox-inline.checkbox-info
+		input#showTotalsOnly(type='checkbox')
+		label(for='showTotalsOnly') Näytä vain saldot
+	if(user.userlevel > 1)
+		select.form-control#userSelect(style='margin-left:10px')
+			option(value="" disabled selected) Valitse käyttäjä
+			option(value="*") Kaikki
+			optgroup#act(label="Aktiiviset")
+			optgroup#pass(label="Passiviset")
+	button.btn.btn-info.btn-sm.btn-outline#printReport(style='margin-left:10px')
+		i.fa.fa-fw.fa-print
+		| Tulosta

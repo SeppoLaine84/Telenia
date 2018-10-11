@@ -1,0 +1,360 @@
+#logout-container(style="display:none")
+	h1 Kirjaudu ulos
+	p Täytäthän vielä ylös työpäivääsi käytetyt tunnit.
+	hr
+	#reports
+		include users/report
+	h4 Soittoja 
+		strong.badge.total-calls 0
+		|  kappaletta
+	h4.reward Palkkio yhteensä 
+		strong.money-total 0.00€
+	a.btn.green.disabled.save-report
+		i.fa.fa-save
+		|  Tallenna ja kirjaudu ulos
+
+script.
+	
+	var totalCalls 	= 0;
+	var daysLeft 	= 0;
+	var moneyTot	= 0;
+	
+	$.ajax({
+		type:"POST",
+		dataType:"json",
+		url:"/user/report",
+		success: function(reportData){
+			
+			days 		= Object.keys( reportData );
+			daysLeft 	= days.length;
+		
+			if(daysLeft == 0)
+				document.location.href = "/user/logout";
+			else {
+				days.reverse();
+				days.forEach(function(reportDay){	// Luodaan joka päivälle oma table
+					luoKuittausTable(reportData, reportDay);
+				});
+			
+			}
+		}
+		
+	});
+	
+	$(".logout").addClass("active");
+	
+	$(".logout.active").off("click").on("click", function(e){
+		e.preventDefault();
+		toastr["warning"]("Täytä tunnit ja paina 'Tallenna ja kirjaudu ulos'-nappulaa", "Ohje!");
+		
+		
+	});
+	
+	function luoKuittausTable(reportData, reportDay){
+		var $table = $("#kuittaus-template").clone();
+		$table.attr("id", "#kuittaus-"+reportDay.replace(/\./g, "-"));
+		
+		$table.find("#kuittaus-date").text(reportDay);
+		$table.removeClass("hidden");
+		$table.addClass("kuittaus-day");
+		$table.appendTo($("#reports"));
+		
+		var kampanjat 	= _.groupBy(reportData[reportDay], "kampanjaID");
+		var ids 		= Object.keys(kampanjat);
+		var left 		= ids.length;
+		
+		
+
+		
+		ids.reverse();
+		ids.forEach(function(id){
+			var kampanja = kampanjat[id];
+			
+		//	console.log("kampanja ",id, kampanja);
+			var $row = $table.find(".row-template").clone();		
+			$row.attr("id", "kuittaus-row-"+id);
+			$row.data("_id", id);
+			$row.data("date", reportDay);
+			
+			$row.removeClass("row-template");
+			$row.removeClass("hidden");
+			
+			
+			$row.prependTo($table.find("tbody"));
+			
+			
+			$.ajax({
+				type:"POST",
+				url:"/campaign/name",
+				data:{
+					id:id
+				},
+				dataType:"json",
+				success:function(row){
+							
+					var $_row = $table.find("#kuittaus-row-"+row._id);
+					totalCalls += kampanja.length;
+					
+					$_row.find(".campaign-name").text(row.nimi);
+					var statuses 	= _.groupBy(kampanja, "data"); // Jaottele statuksien mukaan
+					var statusNames = Object.keys(statuses); 
+					
+					statusNames.forEach(function(status){
+						if(status.length > 0){
+							var count = statuses[status].length;
+							
+							$_row.find("."+status.toLowerCase()).text(count);
+						}
+					//	console.log(status)
+					});
+					
+					
+					var h = $_row.find(".ok").text()
+					
+					
+					
+					if(Number.isInteger(parseInt(h)))
+						h = parseInt(h);
+					
+					console.log(row.provisio);
+					$_row.data("provisio", row.provisio);
+					if(kampanja.length > 0)
+						$_row.find(".money-prov").text(parseFloat((h* row.provisio)).toFixed(2)+"€");
+					
+					left--;
+					if(left == 0){
+					
+						var table = $_row.closest("table");
+						var ok=0,ei=0,ev=0,su = 0,tj=0,v=0,tunnit = 0;
+					
+						$(table).find(".ok").toArray().forEach(function(oks){
+								ok += parseInt($(oks).text());
+						});
+						
+						$(table).find(".ei").toArray().forEach(function(oks){
+							ei += parseInt($(oks).text());
+						});
+						
+						$(table).find(".ev").toArray().forEach(function(oks){
+							ev += parseInt($(oks).text());
+						});
+						
+						$(table).find(".su").toArray().forEach(function(oks){
+							su += parseInt($(oks).text());
+						});
+						
+						$(table).find(".tj").toArray().forEach(function(oks){
+							tj += parseInt($(oks).text());
+						});
+						
+						$(table).find(".v").toArray().forEach(function(oks){
+							v += parseInt($(oks).text());
+						});
+						
+						$(table).find(".ok-total").text(ok);
+						$(table).find(".ei-total").text(ei);
+						$(table).find(".ev-total").text(ev);
+						$(table).find(".su-total").text(su);
+						$(table).find(".tj-total").text(tj);
+						$(table).find(".v-total").text(v);
+						
+						var tot = parseFloat(parseFloat($(table).closest(".kuittaus-day").find(".ok-total").text()) * row.provisio).toFixed(2);
+					
+						$(table).closest(".kuittaus-day").find(".money-total").text(tot+"€");
+					
+						if(tot > 0)
+							$(table).closest(".kuittaus-day").find(".reward").fadeIn();
+						else
+							$(table).closest(".kuittaus-day").find(".reward").fadeOut();
+						
+						
+						var moneyProvTotal = 0.00;
+						$(table).find(".money-prov").toArray().forEach(function(h){
+							var _h = parseFloat($(h).text())
+							if(!Number.isNaN(_h))
+								moneyProvTotal += (_h);
+						});
+						$(table).find(".money-prov-total").text(parseFloat(moneyProvTotal).toFixed(2)+"€");
+					
+						daysLeft--;
+						if(daysLeft == 0){
+							
+							$(".total-calls").text(totalCalls);
+							$(".money-total").text(calculateTotalMoney("#reports")+"€");
+							validButton();
+							$("#logout-container").slideDown();
+						}
+							
+						$(table).find(".tunnit").off("focus").on("focus", function(){
+							$(this).val("");
+							
+						});
+						
+						$(table).find(".tunnit").off("blur").on("blur", function(){
+							
+							
+							var elem = this;
+						//	console.log(Number.isInteger($(this).text()) || $(this).text().length > 0)
+							
+							if(Number.isInteger(parseInt($(this).val())) && $(this).val().length > 0){
+								
+								calucalteRow(elem);
+								validButton();
+							}
+							else {
+								
+								calucalteRow(elem);
+								$(elem).closest("tr").find(".money-hour").text("");
+								validButton();
+							}
+						});
+					}
+				}
+			});
+			
+			
+		})
+	
+	}
+	
+	function calucalteRow(rowElement) {
+	
+		tunnit 			= 0;
+		moneyProvTotal 	= 0.00;
+		moneyHourTotal 	= 0.00;
+		var table 		= $(rowElement).closest(".kuittaus-day");
+		
+		$(table).find(".tunnit").toArray().forEach(function(h){
+			var h = $(h).val();
+			if(Number.isInteger(parseInt(h)))
+				tunnit += parseInt(h);
+		});
+		
+		var rowOK 		= parseInt($(rowElement).parent().parent().find(".ok").text());
+		var rowTunnit	= parseInt($(rowElement).val());
+		
+		var provisio 	= rowOK *  $(rowElement).closest("tr").data().provisio;
+		var tunti 		= parseFloat((rowTunnit * parseFloat(#{user.palkka.tuntipalkka})));
+		var palkka 		= tunti + provisio;
+		
+		
+		$(rowElement).closest("tr").find(".money-hour").text(parseFloat(tunti).toFixed(2) + "€");
+	
+		//$(this).parent().parent().find(".money").text(palkka + "€")
+		$(table).find(".tunnit-total").text(tunnit);
+		
+		$(table).find(".money-hour").toArray().forEach(function(h){
+		
+			var _h = parseFloat($(h).text())
+		
+			if(!Number.isNaN(_h))
+				moneyHourTotal += (_h);
+			 
+		});
+		
+		$(table).find(".money-prov").toArray().forEach(function(h){
+			var _h = parseFloat($(h).text())
+		
+			if(!Number.isNaN(_h))
+				moneyProvTotal += (_h);
+		});
+	
+			$(table).find(".money-hour-total").text(parseFloat(moneyHourTotal).toFixed(2)+"€");
+		
+			$(table).find(".money-prov-total").text(parseFloat(moneyProvTotal).toFixed(2)+"€");
+		
+			
+		$(".money-total").text(calculateTotalMoney("#reports")+"€");
+	}
+	
+	
+	function calculateTotalMoney(element) {
+		var $elem = $(element);
+		var money = 0;
+		$elem.find(".money-hour, .money-prov").toArray().forEach(function(e){
+			var t = parseFloat($(e).text())
+			if(!Number.isNaN(t))
+				money += t;
+		})
+		
+		return money.toFixed(2);
+	}
+	
+	
+	function calculateStatuses(element) {
+		var statuses 	= {};
+		
+		$(element).find(".statuss").toArray().forEach(function(status){
+			var t 		= $(status).data("status");
+			var text 	= $(status).text();
+			statuses[t] = parseInt(text);
+		
+		});
+		
+		return statuses;
+	}
+	
+	// Validoi raportin
+	function validateReport(element){
+		
+		var $elem = $(element);
+		var valid = true;
+		$elem.find(".kuittaus-row").not(".row-template").find(".editable.tunnit").toArray().forEach(function(e){
+			if(!Number.isInteger(parseInt($(e).val()))){
+				valid = false;
+			}
+		});
+		return valid;
+		
+	}
+	
+	// Avaa tallennus buttonin raportin validaation mukaan
+	function validButton(){
+		var valid = validateReport("#reports");
+		if(valid === true){
+			$(".save-report").removeClass("disabled");
+		}
+		else{
+			$(".save-report").addClass("disabled");
+		}
+	}
+	
+	
+	
+	
+	$(".save-report").off("click").on("click", function(){
+		$(this).hide();
+		var rows 	= $(".kuittaus-row").not(".row-template").toArray();
+		var datas 	= [];
+		rows.forEach(function(row){
+			var campaignName 	= $(row).find(".campaign-name").text();
+			var rowStatuses 	= calculateStatuses(row);
+			var tunnit			= parseInt($(row).find(".tunnit").val());
+			var hour			= parseFloat($(row).find(".money-hour").text());
+			var prov			= parseFloat($(row).find(".money-prov").text());
+			var data = {
+				kampanjaID:		$(row).data("_id"),
+				date:			$(row).data("date"),
+				campaignName: 	campaignName,
+				statuses:		rowStatuses,
+				tunnit:			tunnit,
+				tuntipalkka:	hour,
+				provisiopalkka: prov,
+			};
+			datas.push(data);
+		});
+				
+		$.ajax({
+			url:		"/report/save",
+			type:		"POST",
+			dataType:	"json",
+			data: 		{data:JSON.stringify(datas)},
+			success: function(response){
+				console.log(response);
+				if(response.status == true)	document.location.href = "/user/logout";
+			},
+			
+		});
+	});
+	
+	

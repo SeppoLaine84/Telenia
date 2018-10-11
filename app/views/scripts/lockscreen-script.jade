@@ -1,0 +1,46 @@
+script.
+	$(document).ready(function(){
+		var _lockScreen = function(timeout, $lockScreen){
+			var _self 		= this;
+			_self.timeout 	= timeout;
+			var locked		= false;
+			
+			_self.input 	= $lockScreen.find("#pwd");
+			_self.form		= $lockScreen.find("#unlockForm");
+			
+			$(_self.form).submit(function(e){
+				e.preventDefault();
+				console.log("unlocking")
+				IOclient.emit("user.unlock.screen", {pwd: #("#pwd").val()});
+				return false;
+			});
+			
+			document.onmousemove = function () {
+				clearTimeout(_self.timeout);
+				_self.timeout = setTimeout(function(){
+					locked = true;
+					
+					$lockScreen.addClass("locked");
+					$lockScreen.animate({opacity:1.0}, 300, function(){});
+					
+					_self.lockCheck = setInterval(checkLocked, 100);
+					
+				}, timeout);		
+			};
+			
+			
+			var checkLocked = function(){
+				console.log($("#lockScreen").hasClass("locked, hidden"));
+					
+			}
+			
+			
+			_self.timeout = setTimeout(function(){
+				$lockScreen.animate({opacity:1.0}, 300, function(){});
+			}, timeout);		
+			
+			return _self.timeout;
+		}
+		
+		var lockScreen = new _lockScreen(3000, $("#lockScreen"));
+	});

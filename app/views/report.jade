@@ -1,0 +1,163 @@
+h1 Raportointi
+hr
+.tree
+	h3 Myyjät
+	#userReports
+		ul.users.list
+			for user in report
+				li
+					button.expand
+						span
+					h3.username= user.yhteystiedot.nimi.etu + " " + user.yhteystiedot.nimi.suku
+					span= userLevelStrings[user.userlevel]
+					.details#user-details
+						ul.list-unstyled.list
+							if(user.reports)
+								if(user.reports.length > 0)
+									for val in user.reports
+										li
+											h3= val[0].aikaShort
+											span.hidden.time-short= _moment(val[0].aikaShort, "DD.MM.YYYY").format("X")
+											table.table.table-hover
+												thead
+													tr(style='color:white;border:0')
+														th(style='color:white;border:0') Kampanjan nimi
+														th(style='color:white;border:0') OK
+														th(style='color:white;border:0') EI
+														th(style='color:white;border:0') EV
+														th(style='color:white;border:0') SU
+														th(style='color:white;border:0').text-center Tunnit 
+														th(style='color:white;border:0' colspan="2").text-center Palkkio 
+													tr(style='color:white;border:0')
+														td(style='color:white;border:0')
+														td(style='color:white;border:0')
+														td(style='color:white;border:0')
+														td(style='color:white;border:0')
+														td(style='color:white;border:0')
+														td(style='color:white;border:0')
+														td(style='color:white;border:0').text-center Tunti
+														td(style='color:white;border:0').text-center Provisio
+												tbody
+													for item in val
+														tr(data-val="#{item}")
+															td= item.campaignName
+															td= item.statuses.ok
+															td= item.statuses.ei
+															td= item.statuses.ev
+															td= item.statuses.su
+															td.text-center= item.tunnit
+															td.text-center= item.tuntipalkka
+																| €
+															td.text-center= item.provisiopalkka
+																| €
+													
+												
+								else
+									h4 Ei raportteja
+							else
+								h4 Ei raportteja
+if(user.userlevel > 1)
+	.tree.reportTree
+		h3 Asiakkaat
+		#customerReports
+			.campaigns.reportTree.tree
+script.
+	var reportList = new List("userReports", {valueNames:["username"]});
+
+	reportList.sort('username', {order:"asc"});
+	$(".users.list .details").toArray().forEach(function(detail){
+		var datailList = new List($(detail)[0], {valueNames:["time-short"]});
+
+		datailList.sort('time-short', {order:"desc"});
+	})
+	
+	
+if(user.userlevel > 1)	
+	script.
+		$.ajax({
+			url: "/customer/get",
+			type: "POST",
+			dataType:"json",
+			success:function(customers){
+				
+				customers.forEach(function(customer){
+				
+					var $custom = $("<li id='customer-"+customer._id+"' class='campaign-report'><button class='expand'><span></span></button><h3>"+customer.nimi+"</h3><div class='row details'><div class='col-xs-12'><h4>Kampanjat</h4><ul class='reportTree customer-campaings tree' style='padding-left:0'></ul></div></div></li>").appendTo($(".campaigns.reportTree"));
+						
+					$.ajax({
+						url: "/customer/campaign/get",
+						type: "POST",
+						dataType:"json",
+						data:{
+							customerID: customer._id,
+						},
+						success:function(campaigns){
+						
+							campaigns.forEach(function(campaign){
+								$div 	= $("<li class='campaign-item' id='campaign-report-"+campaign._id+"' data-id='"+campaign._id+"'><button class='expand'><span></span></button><div class='short-details'><h3>"+campaign.nimi+"</h3></div><div class='details'><p class='loading'>Ladataan raporttia...</div></div></li>");
+								$d 		= $("#customer-"+campaign.customerID+" .customer-campaings").append($div);
+								
+								$div.find(".expand").off("click").on("click", function(e){
+									var $d = $(this).closest(".campaign-item");
+									e.preventDefault();
+									//console.log($(this).hasClass("open"));
+									if(!$d.hasClass("loaded")){
+										$d.addClass("loaded");
+										loadItems($d.data("id"), function(){});
+									}
+								})
+								
+								
+								
+							});
+						},
+					});
+				});
+			},
+		});
+		
+		function loadItems(id, cb)	{
+		
+			var $c 	= $("#campaign-report-"+id+" .details");
+			$c.find(".loading").removeClass("hidden");
+			$.ajax({
+				url:		"/campaign/getItems",
+				dataType:	"json",
+				type:		"POST",
+				data: {
+					id: id,
+				},
+				success: function(items) {
+							
+					$c.find(".ci").remove();
+					var itms = _.sortBy(items, "status");
+					
+					itms.forEach(function(item){
+						
+						var $ci = $("<li class='ci'><button class='expand'><span></span></button><div class='status "+item.status.toLowerCase()+"'>"+(item.status || "ERR")+"</div><div class='short-details'><h3>"+item.payload[0].value+"</h3></div><div class='details row'></div></li>").appendTo($c);
+						
+						item.payload.forEach(function(p){
+							$ci.find(".details").append($("<div class='infoRow row nomargin'><div class='col-xs-12 nopadding'><div class='text-capitalize col-xs-12 col-md-5 col-lg-3'>"+p.name+"</div ><div class='col-xs-12 col-md-7 col-lg-9'><strong>"+p.value+"</strong></div></div></div>"));
+						})
+						if(item.users.nimi)
+							$ci.find(".details").append($("<div class='infoRow row nomargin'><div class='col-xs-12 nopadding'><div class='text-capitalize col-xs-12 col-md-5 col-lg-3'>Myyjä</div ><div class='col-xs-12 col-md-7 col-lg-9'><strong>"+item.users.nimi+"</strong></div></div></div>"));	
+						if(item.status)
+							$ci.find(".details").append($("<div class='infoRow row nomargin'><div class='col-xs-12 nopadding'><div class='text-capitalize col-xs-12 col-md-5 col-lg-3'>Status</div ><div class='col-xs-12 col-md-7 col-lg-9'><strong class='status-color "+item.status.toLowerCase()+"'>"+item.status+"</strong></div></div></div>"));
+						if(item.report)
+							$ci.find(".details").append($("<div class='infoRow row nomargin'><div class='col-xs-12 nopadding'><div class='text-capitalize col-xs-12 col-md-5 col-lg-3'>Lisätietoa</div ><div class='col-xs-12 col-md-7 col-lg-9'><strong>"+item.report+"</strong></div></div></div>"));
+						
+						if(item.soitettu.length) {
+							var $sect = $("<div class='row'><div class='col-xs-12'><hr/><section style='padding:6px;padding-top:20px'><h4>Tapahtumahistoria</h4><br/><div class='calls'></div></section></div></div>")
+						
+							item.soitettu.forEach(function(called){
+								$sect.find(".calls").append($("<ul class='list-unstyled' style='padding-bottom:6px;'><i class='fa fa-fw fa-phone'></i><strong>Soitto</strong><li><small><i class='fa fa-fw fa-calendar'></i>"+moment(called.aika).format("DD.MM.YYYY")+"</li><li><i class='fa fa-fw fa-clock-o'></i>"+moment(called.aika).format("HH:mm:ss")+"</li><li><i class='fa fa-fw fa-user'></i>"+(called.soittaja ||"Ei dataa")+"</li><li><i class='fa fa-fw fa-commenting-o'></i>"+called.status+"</li></small></ul>"))
+							})
+							$ci.find(".details").append($sect);
+						}
+					})
+					$c.find(".loading").addClass("hidden");
+					if(cb)cb();
+				},
+				error: function(err){console.log(err);},
+			});
+		}

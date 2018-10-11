@@ -1,0 +1,20 @@
+
+- 	var showWidget = "";
+	if(page == "etusivu")
+		if(user.uiOptions.etusivu.widgets.weeklyChart.show == 1)
+			include charts/weeklyChart
+	else 	
+		include charts/weeklyChart
+	
+	if(page == "etusivu")
+		if(user.uiOptions.etusivu.widgets.weeklyUserChart.show == 1)
+			include charts/weeklyUserChart
+	else 	
+		include charts/weeklyUserChart
+	
+	if(page == "etusivu")
+		if(user.uiOptions.etusivu.widgets.timespanChart.show == 1)
+			include charts/timespanChart
+	else 	
+		include charts/timespanChart
+	

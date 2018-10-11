@@ -1,0 +1,47 @@
+li.panel.panel-default.payload-item.new-campaing-item.hidden(style='margin-bottom:8px')
+	.panel-heading
+		a.panel-title()
+			.panel-status.bg-vihrea
+				i.fa.fa-plus.fa-lg(style='margin-top:0.4em')
+			.row
+				.col-md-6
+					h2.payload-name Lisää uusi
+			
+	.panel-body
+		form.row.payload-datas.details.no-display()
+				
+			.col-sm-6.payloads
+				if(payloads[0])
+					each key in payloads[0].keys
+						label= key
+						input.form-control(type='text' name='#{key}')
+			.col-sm-6.more-info
+				.form-group
+					label Lisätietoja
+					textarea.form-control#desc(cols='40', rows='10')
+				button.btn.btn-white.btn-lg.save-new-item(type='button' data-campID='#{campaign._id}') Tallenna
+				.kuittaus-buttons.hidden
+					button.btn.btn-ok.btn-lg.status-change(type='button')
+						strong OK
+					button.btn.btn-ei.btn-lg.status-change(type='button')
+						strong EI
+					button.btn.btn-ev.btn-lg.status-change(type='button')
+						strong EV
+					button.btn.btn-su.btn-lg.status-change(type='button')
+						strong SU
+					button.btn.btn-tj.btn-lg.status-change(type='button')
+						strong TJ
+					button.btn.btn-v.btn-lg.status-change(type='button')
+						strong V
+					hr
+				.callAgainDialog.hidden(data-maxDate='#{campaign.kesto}')
+				button.btn.btn-white.btn-lg.kuittaus.disabled.hidden(type='button' data-campID='#{campaign._id}' data-plID='') Hyväksy valinta
+	.panel-footer.hidden
+		h4.pnum
+		.callAgain.hidden Soita uudestaan 
+			strong.callAgainTime
+			br
+		.callData.hidden Soittoja 
+			strong.call-count 0
+			br
+			.callTimes

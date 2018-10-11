@@ -1,0 +1,88 @@
+script(src='/js/plugins/stacktrace/stacktrace.min.js')
+script.
+	window.onerror = function(msg, file, line, col, error) {
+		
+		StackTrace.fromError(error).then(function(stack){
+			
+			
+			
+		/*			
+			var gps = new StackTraceGPS();
+
+			// Pinpoint actual function name and source-mapped location
+			gps.pinpoint(stack[0]).then(function(errGps){
+				console.log("perkele")
+				console.log(errGps)
+				
+			}, function(){});
+			
+			
+			console.log(stack[0].getSource());
+			*/			
+			var stringi = file+", rivi: "+line+ ", "+ msg ;
+			IOclient.emit("clientERR", stringi);
+			toastr.error("<strong>" +error.toString()+ "</strong><br/>Päivitä sivu varmuuden vuoksi uudestaan.<br/><small>Ongelma on raportoitu automaattisesti.</small>", "Virhe ohjelmakoodissa!", {extendedTimeOut :0, timeOut:0, closeButton:true});  
+		}).catch(function(err){
+			console.log(err);
+		});
+	};
+script(src="/js/jquery-2.1.1.js")
+script(src='/js/plugins/jquery-ui/jquery-ui.min.js')
+script(src="/js/bootstrap.min.js")
+script(src="/js/plugins/jqForm/jqForm.min.js")
+script(type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.14.1/moment.min.js")
+script(type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.14.1/locale/fi.js")
+script(src="/js/plugins/underscore/underscore.min.js")
+script(src="/js/fastclick.min.js")
+script(src="/socket.io/socket.io.js")
+//script(src="/js/jquery.scrollbar.min.js")
+script(src='/js/plugins/slimscroll/jquery.slimscroll.min.js')
+script(src='/js/progressbar.min.js')
+
+// Toastr
+script(src="/js/plugins/toastr/toastr.min.js")
+script.
+	toastr.options = {
+		"closeButton": false,
+		"debug": false,
+		"newestOnTop": true,
+		"progressBar": false,
+		"positionClass": "toast-top-right",
+		"preventDuplicates":false,
+		"onclick": null,
+		"showDuration": "300",
+		"hideDuration": "1000",
+		"timeOut": "5000",
+		"extendedTimeOut": "1000",
+		"showEasing": "swing",
+		"hideEasing": "linear",
+		"showMethod": "fadeIn",
+		"hideMethod": "fadeOut"
+	}
+
+script(src='/js/plugins/metisMenu/jquery.metisMenu.js')
+script(src="/js/plugins/sweetalert/sweetalert2.min.js")
+script(src="/js/plugins/validate/jquery.validate.min.js")
+script(src="/js/plugins/chartJs/Chart.min.js")
+script(src="/js/jquery.fileDownload.js")
+script(src="/js/async.js")
+
+// Tablet
+script(src="/js/plugins/jeditable/jquery.jeditable.js")
+script(src="/js/plugins/dataTables/datatables.min.js")
+script(src="/js/jquery.tablesorter.min.js")
+
+//script(src="//cdnjs.cloudflare.com/ajax/libs/list.js/1.1.1/list.min.js")
+script(src='/js/countdown.min.js')
+script(src="/js/plugins/daterangepicker/daterangepicker.js")
+script(src='/js/plugins/peity/jquery.peity.min.js')
+script(src='/js/plugins/pace/pace.min.js')
+
+script(src='/js/jquery.scrollTo.min.js')
+script(src="/js/bootstrap-datetimepicker.min.js")
+
+script(src="https://npmcdn.com/isotope-layout@3.0/dist/isotope.pkgd.min.js")
+script(src="https://npmcdn.com/packery@2.1/dist/packery.pkgd.min.js")
+script(src="https://npmcdn.com/draggabilly@2.1/dist/draggabilly.pkgd.min.js")
+
+script(src='/js/inspinia.js')

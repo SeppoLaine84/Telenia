@@ -1,0 +1,17 @@
+#lockScreen.animated.fadeInDown.container
+	.lock-word.animated.fadeInDown
+		span.first-word NÄYTTÖ
+		span.second-word LUKITTU
+	.middle-box.text-center.lockscreen.animated.fadeInDown
+		div
+			.m-b-md
+				img(alt='Telenia', src='/images/telenia-pallot.png')
+			h3= user.yhteystiedot.nimi.etu + " " + user.yhteystiedot.nimi.suku
+		p
+			| Näyttö on lukittu koska et ole ollut aktiivisena hetkeen, kirjoita salasanasi jatkaaksesi.
+		form#unlockForm.m-t(role='form')
+			.form-group
+				input#pwd.form-control(type='password', placeholder='******', required='')
+			button.btn.btn-primary.block.full-width(type='submit')
+				i.fa.fa-unlock.fa-fw
+				| Avaa lukitus

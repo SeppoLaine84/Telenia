@@ -1,0 +1,14 @@
+extends ../layout
+block content
+	#page-wrapper.gray-bg
+			.row.wrapper.border-bottom.white-bg.page-heading
+				.col-xs-12
+					h1
+						i.fa.fa-spinner.fa-pulse.fa-fw.page-title-icon
+						span.page-title= loadingText
+			.wrapper-content#main-content
+				.row
+					include chart-container
+								
+block content-scripts
+	include chart-script

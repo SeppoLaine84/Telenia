@@ -1,0 +1,738 @@
+script
+	:uglify-js
+		function validateEmail(email) {
+			var re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+			return re.test(email);
+		}
+		
+		function linkify(inputText) {
+			var replacedText, replacePattern1, replacePattern2, replacePattern3;
+			
+			
+			//URLs starting with http://, https://, or ftp://
+			replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
+			replacedText 	= inputText.replace(replacePattern1, '$1');
+			
+			//URLs starting with "www." (without // before it, or it'd re-link the ones done above).
+			replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
+			replacedText = replacedText.replace(replacePattern2, 'http://$2');
+			
+			//Change email addresses to mailto:: links.
+			replacePattern3 = /(([a-zA-Z0-9\-\_\.])+@[a-zA-Z\_]+?(\.[a-zA-Z]{2,6})+)/gim;
+			replacedText = replacedText.replace(replacePattern3, 'mailto:$1');
+			
+			return replacedText;
+		}	
+		
+		function formatBytes(bytes,decimals) {
+		   if(bytes == 0) return '0 Byte';
+		   var k = 1000;
+		   var dm = decimals + 1 || 3;
+		   var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+		   var i = Math.floor(Math.log(bytes) / Math.log(k));
+		   return (bytes / Math.pow(k, i)).toPrecision(dm) + ' ' + sizes[i];
+		}
+		function secondsToString(seconds)
+		{
+			
+			var numdays = Math.floor((seconds % 31536000) / 86400); 
+			var numhours = Math.floor(((seconds % 31536000) % 86400) / 3600);
+			var numminutes = Math.floor((((seconds % 31536000) % 86400) % 3600) / 60);
+			var numseconds = (((seconds % 31536000) % 86400) % 3600) % 60;
+			return numdays + " päivää " + numhours + " tuntia " + numminutes + " minuuttia " + numseconds + " sekunttia";
+
+		}
+		
+		function sortDiv(elem, val){
+			var mylist 		= elem;
+			var listitems 	= mylist.children('li').get();
+			
+			listitems.sort(function(a, b) {
+				var compA = $(a).data(val).toUpperCase();
+				var compB = $(b).data(val).toUpperCase();
+				return (compA < compB) ? -1 : (compA > compB) ? 1 : 0;
+			}).reverse();
+			
+			$.each(listitems, function(idx, itm) { mylist.append(itm);$(itm).show() });
+		}
+		
+		function sortDivNum(elem,limit, val){
+			var mylist 		= elem;
+			var listitems 	= mylist.children(limit).get();
+			
+			listitems.sort(function(a, b) {
+				var compA = $(a).data(val);
+				var compB = $(b).data(val);
+				return (compA < compB) ? -1 : (compA > compB) ? 1 : 0;
+			}).reverse();
+			
+			$.each(listitems, function(idx, itm) { mylist.append(itm);$(itm).show() });
+		}
+		
+		var callList;
+		
+		
+		$(window).load(function(){
+			$("nav#main-nav .direct-link").fadeIn('slow').css("display", "block");
+		});
+		
+		$(document).ready(function() {
+
+			FastClick.attach(document.body);
+
+			$('.login').click(function() {
+				$('#overlay').fadeIn();
+				$('#overlay').find('.content').addClass('open');
+			});
+
+			$('.close').click(function() {
+				$(this).parent().fadeOut();
+			});
+		
+			
+		
+			
+			/*
+			var quotes = $(".switch");
+			var quoteIndex = -1;
+
+			function showNextQuote() {
+				++quoteIndex;
+				quotes.eq(quoteIndex % quotes.length)
+					.fadeIn(300)
+					.delay(2000)
+					.fadeOut(300, showNextQuote);
+			}
+
+			showNextQuote();
+			*/
+
+			$('.form-control').focus(function() {
+				$(this).prev('label').addClass('active');
+			});
+
+			$('.form-control').blur(function() {
+				$(this).prev('label').removeClass('active');
+			});
+
+			$('.submit').click(function(e) {
+				//e.preventDefault();
+				$('.note').slideDown(200).delay(1000).slideUp(200);
+			})
+			
+			
+				
+			$('body').on('click', '.editable', function() {
+			
+				$(this).val("");
+			
+			});
+			
+			$('body').on('blur', '.editable', function(e) {
+				
+				var intCheck = Number.isInteger(parseInt($(this).val()));
+				var lenCheck = $(this).val().length;
+
+				if(intCheck === false){
+					
+					$(this).val("TÄYTÄ");
+					return true;
+				}
+				else if(lenCheck <= 0){
+					
+					$(this).val("TÄYTÄ");
+					return true;
+				}
+				return false;
+			});
+			
+			
+			// Customer funktioita
+			$("body").on("click", ".add-customer",function(e){
+				
+				if($(this).closest(".customer").find("#customer-name").val().length > 0 ){
+					
+					$(this).closest(".customer").find("button.expand").removeClass("open");
+					$(this).closest(".customer").find(".customer-name").html($(this).closest(".customer").find("input#customer-name").val() + " <small class='not-saved'>(Tallennettu)</small>");
+					$(this).closest(".customer").find(".details").slideUp(200);
+					$(this).closest(".customer").find(".not-saved").delay(2000).fadeOut(400);
+					
+					var formData 	= $(this).closest(".customer").find("#customer-details").serializeArray();
+					var _self 		= this;
+					$.ajax({
+						url:		"/customer/add",
+						type:		"POST",
+						dataType:	"JSON",
+						data:		formData,
+						success:function(resp){
+							toastr.success("Uusi asiakas <strong>"+resp.nimi+"</strong> luotu.")
+							
+							var temp = $(_self).closest("li").find(".remove-customer");
+							$(_self).removeClass("add-customer");
+							$(_self).addClass("save-customer");
+							$(temp).removeClass("remove-customer");
+							$(temp).addClass("delete-customer");
+							
+							$(_self).closest("li").find("#cid").val(resp._id);
+						},
+					})
+				}
+				else {
+					 var $error = $('<span class="error">Yrityksen nimi on tyhjä.</span>');
+					$(this).closest(".customer").find("label[for='nimi']").append($error.delay(errorOptions.view).fadeOut(errorOptions.fade,function(){$(this).remove();}));
+				}
+				
+				e.preventDefault();
+			});
+			
+			$("body").on("click", ".save-customer",function(e){
+				
+				$(this).closest(".customer").find("button.expand").removeClass("open");
+				$(this).closest(".customer").find(".customer-name").html($(this).closest(".customer").find("input#customer-name").val() + " <small class='not-saved'>(Tallennettu)</small>");
+				$(this).closest(".customer").find(".details").slideUp(200);
+				$(this).closest(".customer").find(".not-saved").delay(2000).fadeOut(400);
+				
+				//var cid 		= $(this).closest(".customer").find("#cid").val();
+				var formData 	= $(this).closest(".customer").find("#customer-details").serializeArray();
+				//console.log(cid,formData);
+				$.ajax({
+					url:		"/customer/save",
+					type:		"POST",
+					dataType:	"JSON",
+					data:		formData,
+					success:function(resp){
+						console.log(resp);
+					},
+				})
+						
+				e.preventDefault();
+			});
+			
+			$("body").on("click", "select.disabled", function(e){
+				e.preventDefault();
+			});
+			
+			$("body").on("click", ".delete-customer", function(e){
+				e.preventDefault();
+				var customerID = $(this).closest(".customer").find("#cid").val();
+				var _self = this;
+				$(this).closest("li").removeClass("customer");
+				$(this).closest("li").find(".details").slideUp(200, function(){
+					$(this).closest("li").fadeOut(400, function(){
+						$(_self).remove();
+						$(this).closest("ul").trigger("change");
+					});
+				});
+							
+				$.ajax({
+					url:		"/customer/del",
+					type:		"POST",
+					dataType:	"JSON",
+					data:		{id:customerID},
+					success:function(resp){
+						console.log(resp);
+					},
+				})
+			});
+			
+			$('body').on('click', '.remove-customer', function(e) {
+				e.preventDefault();
+				$(this).closest("li").removeClass("customer");
+				$(this).closest("li").slideUp(200, function(){
+					$(this).remove();
+				});
+				$(this).closest("ul").trigger("change");
+			
+			});
+		
+		
+			// User funks
+			$("body").on("click", ".add-user-btn",function(e){
+				$(".new-user").slideDown(200,function(){
+					$(".new-user .expand").addClass("open");	
+					$(".new-user .details").slideDown(200, function(){
+						$(window).scrollTo($(".new-user"), 200);
+					})
+				});
+			});
+		
+		
+		
+					
+			$("body").on("click", ".save-user", function(e){
+				e.preventDefault();
+				var form 		= $(this).closest("form.details");
+				var formData 	= $(form).serializeArray();
+				$(this).closest(".user").find(".userFullName").text($(form).find("input[name='yhteystiedot.nimi.etu']").val() + " "+ $(form).find("input[name='yhteystiedot.nimi.suku']").val());
+				$(this).closest(".user").find(".userMail").text($(form).find("#email").val());
+				
+				$.ajax({
+					url:		"/user/save",
+					type:		"POST",
+					dataType:	"json",
+					data:		formData,
+					success:function(resp){
+						toastr.success("Käyttäjän tiedot tallennettu.")
+					},
+				})
+						
+			});
+			
+		
+			$("body").on("click", ".del-user",function(e){
+				e.preventDefault();
+				var nimi = $(this).closest(".user").find(".userMail").text();
+				var _self 		= this;
+				var uid 		= $(_self).closest(".user").find("#uid").val();
+				
+				openConfirmDialog("Käyttäjän poisto", "<i class='text-alert fa fa-warning fa-2x pull-left'></i><h4>Poistetaanko käyttäjä \"<strong>"+nimi+"\"</strong> varmasti?<br/><small>Et voi myöhemmin peruuttaa toimintoa enää.</small></h4>", function(){
+									
+					$.ajax({
+						url:		"/user/del",
+						type:		"POST",
+						dataType:	"JSON",
+						data:		{id:uid},
+						success:function(resp){
+							
+							
+							toastr.success("Käyttäjä <strong>"+$(_self).closest(".user").find(".short-details h3").text()+"</strong> poistettu.");
+							
+							$(_self).closest("li").removeClass("user");
+							$(_self).closest("li").find(".details").slideUp(200, function(){
+								$(_self).closest("li").fadeOut(400, function(){
+									$(_self).remove();
+									$(_self).closest("ul").trigger("change");
+								});
+							});
+									
+						},
+					})
+				})
+			});
+			
+			$("body").on("click", ".remove-user",function(e){
+				var nimi = $(this).closest(".user").find(".userMail").text();
+				var _self 		= this;
+				var uid 		= $(_self).closest(".user").find("#uid").val();
+				
+				e.preventDefault();
+				openConfirmDialog("Käyttäjä poisto", "<i class='text-alert fa fa-warning fa-2x pull-left'></i><h4>Poistetaanko käyttäjä \"<strong>"+nimi+"\"</strong> varmasti?<br/><small>Et voi myöhemmin peruuttaa toimintoa enää.</small></h4>", function(){
+				
+					
+				
+					$.ajax({
+						url:		"/user/del",
+						type:		"POST",
+						dataType:	"JSON",
+						data:		{id:uid},
+						success:function(resp){
+							toastr.success("Käyttäjä <strong>"+ nimi +"</strong> poistettu.");
+							
+							$(_self).closest("li").removeClass("user");
+							$(_self).closest("li").find(".details").slideUp(200, function(){
+								$(_self).closest("li").fadeOut(400, function(){
+									$(_self).remove();
+									$(_self).closest("ul").trigger("change");
+								});
+							});
+										
+						},
+					})
+				});
+			});
+			
+		
+			$('#main-nav .direct-link').on("click", function(){
+				
+					$('#main-nav li').removeClass("selected");
+					$(this).parent().addClass("selected");
+				
+			});
+			
+			$('body').on('click', '.logout-btn', function() {
+
+				document.location.href ="/user/logout";
+			});
+			
+			
+			$('.buttons button').click(function() {
+				$(this).addClass('active');
+				$(this).siblings().removeClass('active');
+			})
+
+				
+	
+		
+			$("body").off("change", ".dbConn").on("change", ".dbConn", function(){
+				
+				
+				var id 		= $(this).closest(".campaign").data("id");
+				var target 	= $(this).attr('name');
+				var url 	= "/"+$(this).data("target")+"/set";
+				var value 	= $(this).val();
+				var _self 	= this;
+				
+			
+				$.ajax({
+					url: url,
+					data: {id:id, target: target, value:value},
+					dataType:"json",
+					type:"POST",
+					success: function(resp){
+						//console.log(url,id,value);
+					},
+				});
+			});
+			
+		});	
+		var events = {};
+		function updateCalllistMenu(ready) {
+			$.get("/campaign/list", function(list){
+					
+					var totalCalls = 0;
+					var campaignsLeftToLoad = list.length;
+					if(campaignsLeftToLoad == 0){
+						$("#soittolista-menuitem .calls-count").text(totalCalls);
+						$(events).trigger("menu.ready");
+						if(ready)ready();
+									
+					}
+					else {
+						$("#soittolista-menuitem .nav-second-level").empty()
+						list.forEach(function(campaign){
+						
+							var $menuItem = $("<li class='soittolista-link' id='"+campaign._id+"-menulink'><a href='/campaign/view/"+campaign._id+"'>"+campaign.nimi+"<span class='label label-info pull-right call-count'> 0</span></a></li>");
+							$menuItem.appendTo($("#soittolista-menuitem .nav-second-level"));
+							$menuItem.data("info", campaign);
+							if(campaign.active === false) $menuItem.addClass("hidden");
+
+							$.ajax({
+								type: 		"POST",
+								url: 		"/campaign/getItemCount",
+								dataType: 	"json",
+								data: {
+									id: 	campaign._id,
+									type: 	"user",
+									active: campaign.active,	
+								},
+								success: function(statuses){
+									
+									if(statuses.active == "true"){
+										var cid = statuses.kampanjaID.toString();
+										if(statuses.totalCount > 0 ){
+											var c = (statuses.counts.ES || 0)+(statuses.counts.SU || 0)+(statuses.counts.EV || 0);
+											if(c > 0){
+											if(JSON.parse(statuses.active) === true || status.active == null)
+												totalCalls += c;
+												var $link = $("#"+cid+"-menulink").not(".hidden");
+												$link.find(".call-count").text(parseInt($link.find(".call-count").text())+c);
+											}
+											else {
+												var $link = $("#"+cid+"-menulink");
+												$link.addClass("hidden");
+											}
+										
+										}
+										else {
+											$("#"+cid+"-menulink").addClass("hidden");
+											
+										}
+									}
+									
+									campaignsLeftToLoad--;
+									if(campaignsLeftToLoad == 0){
+										$("#soittolista-menuitem .calls-count").text(totalCalls);
+										$(events).trigger("menu.ready");
+										if(ready)ready();
+										
+									}
+								},
+								
+							});
+							
+						});
+					}
+				});
+			
+		}	
+		
+	
+		function updateCallListCount(){
+			var tot = 0;
+			$(".soittolista-link").not(".hidden").find(".call-count").toArray().forEach(function(itm){
+				tot += parseInt($(itm).text());
+			});
+			$("#soittolista-menuitem .calls-count").text(tot);
+		}
+		
+		function updateTotalCalls(){
+			var totalCalls = $(".campaign-item").not(".hidden").length;
+			$(".calls-left").text(totalCalls);
+		}
+		
+		function updateStatusList(elem) {
+			
+			var statusList = new List(elem, {
+				page:10000,
+				valueNames: ["status", "callAgainUnixTime", "payload-1"],
+			});
+			statusList.sort('payload-1', {order:"asc"});
+			
+			statusList.sort('callAgainUnixTime', {order:"asc"});
+			statusList.sort('status', {order:"desc"});
+			
+		
+			
+		}
+		
+		
+		
+		function updateCallList(cb) {
+				updateTotalCalls();
+				
+				$(".campaign-section").toArray().forEach(function(section){
+					updateStatusList($(section).find("#camp-list-items")[0])
+				});
+			
+				var kampanjaList = new List("call-list", {
+					page:10000,
+					valueNames: ["name", "customer-name", "count"],
+				});
+				
+				kampanjaList.sort('count', { order: "asc" });
+				kampanjaList.sort('name', { order: "asc" });
+				if(cb)cb();
+			
+		}
+		
+		function updateCallsLeftCampaign(elem) {
+			var count = $(elem).find(".campaign-item").length;
+			$(elem).find(".count").text(count);
+			updateCallCounts();
+		}
+		
+		function updateCallCounts(){
+			
+			var count = 0;
+			$(".camp-header").toArray().forEach(function(campCount){
+				count += parseInt($(campCount).text());
+			});
+			$(".calls-left").text(count);
+		}
+		
+		
+		/* NOTIFY STUFUA */
+		$('.attn').click(function(e) {
+			e.preventDefault();
+			$('#sidepanel').addClass('open');
+			$('#overlay').fadeIn(200);
+			
+			var unseenIDS = [];
+			
+			$('#sidepanel .note.unseen').toArray().forEach(function(unseen){
+				$(unseen).removeClass("unseen");
+				unseenIDS.push($(unseen).data("id"));
+			})
+			
+			if(unseenIDS.length > 0)
+			{
+				$.ajax({
+					url: 		"/notify/setSeen",
+					dataType: 	"json",
+					type:		"POST",
+					data:		{ids:JSON.stringify(unseenIDS), status:false},
+										
+				});
+			}
+				
+			updateNotifyCounter();
+					
+			$("#overlay").on("click", function(){
+				$("#sidepanel").removeClass("open");
+				$('#overlay').fadeOut(200);
+				$(this).off("click");
+			});
+		});
+		
+		function updateNotifyToRead(id) {
+			$.ajax({
+				url: "/notify/setRead",
+				type:	"POST",
+				dataType: "json",
+				data: {id: id, status:false}
+			})
+			
+		}
+		
+		function updateNotifyCounter() {
+			var newCount = $(".notifys .note.unseen").length;
+			var allCount = $(".notifys .note").length;
+			
+			$(".new-notify-count").text(newCount);
+			$(".total-notify-count").text(allCount);
+			
+			if(newCount <= 0) {
+				
+				$(".attn").removeClass("flash")
+			}
+			else
+				$(".attn").addClass("flash")
+			
+			if(allCount <= 0)
+				$("#overlay").click();
+			
+		}	
+		
+
+		function navFix(){
+
+			var $navFixer = $('a[href^="'+ location.pathname + '"]').parent().addClass('active').closest(".nav-second-level").addClass("in").closest("li").addClass("active");
+				
+		}
+		function updateCampMenu(ready){
+			$.ajax({
+				url: 		"/campaign/all",
+				type:		"GET",
+				dataType:	"JSON",
+				success: function(result){
+					var r = _.sortBy(result.camps, "active").reverse()
+					
+					r.forEach(function(camp){
+						var cname = "Nimetön"
+						if(camp.nimi.length > 0)
+							cname = camp.nimi;
+				
+						if(camp.active == null){
+						
+							var $item = $("<li id='menu-campaign-"+camp._id+"' class='camp-edit-link status-active'><a class='nav-label' href='/campaign/edit/"+camp._id+"'><span class='ball'></span>"+(cname)+"<button data-id='"+camp._id+"' id='delCamp' class='btn btn-danger del-btn pull-right btn-sm'><i class='fa fa-times' style='margin-left:0;margin-right:0;'></i></button></a></li>");
+							$item.insertAfter($("#allcamps #newCamp"))
+						}
+						else if(camp.active === true) {
+							var $item = $("<li id='menu-campaign-"+camp._id+"' class='camp-edit-link status-active'><a class='nav-label' href='/campaign/edit/"+camp._id+"'><span class='ball'></span>"+(cname)+"<button data-id='"+camp._id+"' id='delCamp' class='btn btn-danger del-btn pull-right btn-sm'><i class='fa fa-times' style='margin-left:0;margin-right:0;'></i></button></a></li>");
+							$item.insertAfter($("#allcamps #newCamp"))
+						}
+						else if(camp.active === false) {
+							var $item = $("<li id='menu-campaign-"+camp._id+"' class='camp-edit-link status-inactive'><a class='nav-label' href='/campaign/edit/"+camp._id+"'><span class='ball'></span>"+(cname)+"<button data-id='"+camp._id+"' id='delCamp' class='btn btn-sm btn-danger del-btn pull-right'><i class='fa fa-times' style='margin-left:0;margin-right:0;'></i></button></a></li>");
+							$("#passiveCamps").append($item);
+						}
+						
+						
+					});
+					$("#allcamps").closest("#kampanjalist-menuitem").find(".campaign-count").text($(".camp-edit-link.status-active").length);
+					if(ready)ready();
+				},
+			})
+			
+		}
+		
+		var delFromMenu = false;
+		
+		$("body").on("click", ".camp-edit-link .del-btn", function(e){
+			e.preventDefault();
+			delFromMenu = true;
+		});
+	
+		$("body").on("click", "#delCamp", function(e){
+
+			var campID = $(this).data("id");
+			var _self = this;
+		
+			swal({
+				title: "Oletko varma poistosta?",
+				text: "Et voi myöhemmin enään peruuttaa toimintoa!",
+				type: "warning",
+				showCancelButton: true,
+				confirmButtonColor: "#DD6B55",
+				confirmButtonText: "Kyllä, poista",
+				cancelButtonText: "Peruuta",
+				
+				}).then(function() {
+					$.ajax({
+						type:"POST",
+						url:"/campaign/remove",
+						dataType:"json",
+						data:{id:campID},
+						success:function(resp){
+					
+							IOclient.emit("req.campaign.active",  {
+								target:"active",
+								value:false,
+								id:campID,
+							})
+							if(delFromMenu === true){
+								$(_self).closest(".camp-edit-link").fadeOut('fast', function(){
+									$(this).addClass("hidden");
+											$("#allcamps").closest("#kampanjalist-menuitem").find(".campaign-count").text($(".camp-edit-link").not(".hidden").length);
+								});
+								delFromMenu = false;
+								swal.close();
+
+
+							}
+						
+						},
+					});
+			}, function(){
+				swal.close();
+			});
+			
+		});
+		
+		Array.prototype.toJSONI = function(){
+			var json = {};
+			this.forEach(function(item){ json[item.name] = item.value; });
+			return json;
+		}
+
+		var statusColorsHEX = {su:"#30bbd0", ev:"#ec9417", ei:"#d05252", ok:"#89b54a", tj:"#be5fc1", v:"#cf4b9c", es:"#5b5b5b"};
+		
+		function convertHex(hex,opacity){
+			hex = hex.replace('#','');
+			r = parseInt(hex.substring(0,2), 16);
+			g = parseInt(hex.substring(2,4), 16);
+			b = parseInt(hex.substring(4,6), 16);
+
+			result = 'rgba('+r+','+g+','+b+','+opacity+')';
+			return result;
+		}
+		
+		function statusColorsRGBA(status, opacity) {
+			return convertHex(statusColorsHEX[status], opacity)
+		}
+		
+		String.prototype.capitalizeFirstLetter = function() {
+			return this.charAt(0).toUpperCase() + this.slice(1);
+		}
+		
+		
+		
+		
+		function viewPayload(ord, payload){
+				//var ord = data.order;
+				//var payload = data.payload;
+				var text = "<div class='payload-container'>";
+			
+				if(payload){
+					payload.forEach(function(pl){
+					
+						if(!_.contains(["www-sivut", "www-osoite", "sähköposti", "email"], pl.name)){
+							var value="";
+							if(pl.value != null)value=pl.value;
+							text += "<div class='row payload-view' ><div class='text-left col-xs-12 col-md-6'>" + pl.name.capitalizeFirstLetter() + "</div><div  class='text-left text-bold col-xs-12 col-md-6'>" + value + "</div></div>";
+						}
+							
+						else
+							text += "<div class='row payload-view' ><div class='text-left col-xs-12 col-md-6'>" + pl.name.capitalizeFirstLetter() + "</div><div  class='text-left text-bold  col-xs-12 col-md-6'><a href='"+linkify(pl.value)+"' target='_blank'>" + pl.value+ "</a></div></div>";						
+					});
+				}
+				else {
+					text +="<h3>Kontakti ei sisällä dataa?</h3>";
+				}
+				text +="</div>";
+				swal({width:600, title:"<h2 class='text-left' style='text-align:left !important'>"+ord.campaingName + "<br/><small>" + ord.payloadName+"</small><hr/></h2>", html:text}).done();
+				
+				//$(".sweet-alert").css("width", "auto");
+			}
+		
+		
+		

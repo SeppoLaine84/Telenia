@@ -1,0 +1,290 @@
+doctype html(lang='fi')
+head
+	title= appSettings.name
+	meta(charset='utf-8')
+	meta(name='viewport', content='width=device-width,initial-scale=1')
+	link(rel='icon', href='/favicon.ico')
+
+	link(rel='stylesheet', href='/css/bootstrap.min.css')
+	link(href='/font-awesome/css/font-awesome.css', rel='stylesheet')
+	link(href="/css/plugins/iCheck/custom.css" rel="stylesheet")
+	link(href="/css/plugins/toastr/toastr.min.css" rel="stylesheet")
+	link(href='/css/animate.css', rel='stylesheet')
+	link(href='/css/bootstrap-datetimepicker.min.css', rel='stylesheet')
+	link(href='/css/jquery.scrollbar.css', rel='stylesheet')
+	link(href="/css/plugins/sweetalert/sweetalert.css" rel="stylesheet")
+	link(href="/css/plugins/awesome-bootstrap-checkbox/awesome-bootstrap-checkbox.css" rel="stylesheet")
+	link(rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.css")
+	style
+		include:less insinia/style.less
+	//if lt IE 9
+	script(src='/js/html5shiv.js')
+	script(src='/js/respond.min.js')
+body.fixed-sidebar.white-bg.bg-logo
+	
+	#wrapper
+		if(user)
+			if(user.userlevel <= 3)
+				include uudet/sidebar
+			else
+				include admin/sidebar
+		
+		div#overlay
+		block additionalOverlay
+
+		div#connLost.overlay(style="display:none;position:fixed;width:100%;height:100%;left:0;top:0;z-index:50000")
+			.overlay-content
+				h1.text-center
+					i.fa.fa-3x.fa-warning.pull-left
+					|  Yhteys palvelimeen on katkennut...
+					br
+					small Odota hetki niin yhteyden pitäisi palata.
+		block login
+	
+		block content
+				
+		include scripts
+		script.
+			
+			toastr.options = {
+				"closeButton": false,
+				"debug": false,
+				"newestOnTop": true,
+				"progressBar": false,
+				"positionClass": "toast-top-right",
+				"preventDuplicates":false,
+				"onclick": null,
+				"showDuration": "300",
+				"hideDuration": "1000",
+				"timeOut": "5000",
+				"extendedTimeOut": "1000",
+				"showEasing": "swing",
+				"hideEasing": "linear",
+				"showMethod": "fadeIn",
+				"hideMethod": "fadeOut"
+			}
+			
+		include engineScript
+
+		block engine-scripts
+			if(user)
+				script.
+					$.fn.collapse.Constructor.TRANSITION_DURATION = 0;
+					
+					var userlevel 		= #{user.userlevel};
+					
+					if(userlevel > 1 && userlevel < 4)
+						updateCalllistMenu(function(){
+							updateCampMenu(function(){
+								navFix()
+								$(".mainmenu").removeClass("hidden").addClass("fadeInLeft")
+							});
+						});
+					else if(userlevel == 1)
+						updateCalllistMenu(function(){
+							navFix()
+							$(".mainmenu").removeClass("hidden").addClass("fadeInLeft")
+						});
+					else{
+						navFix()
+						$(".mainmenu").removeClass("hidden").addClass("fadeInLeft")
+					}
+						
+					$(".page-title-icon").removeClass().addClass("page-title-icon fa fa-fw fa-#{pageIcon}");
+					$(".page-title").text("#{pageTitle}");
+		
+					
+					document.title 		= "#{appSettings.name} - #{pageTitle}";
+					
+					var IOclient 		= io();
+					var connectionLost 	= false;
+					var IOuser;
+					var IOuserlist;
+					
+					var userlist 		= []; 	// Socketista saapunut User lista
+					var customerlist 	= [];	// Socketista Asiakkaat
+					
+					
+					IOclient.on("connect", function(){
+						connectionLost 	= false;
+						$("#connLost").fadeOut();
+						
+						IOclient.emit("LOGIN", "#{user.email}");
+					});
+					
+					IOclient.on("USERINFO", function(_user){
+						IOuser = _user;
+						IOclient.emit('join', _user.clientID);
+					
+					});
+					
+				
+					// Päivitä käyttäjät menuun
+					var $usercount 	= $(".user-count");
+					var $usermenu 	= $("li#userlista-menuitem").find(".nav-second-level");
+					IOclient.on("users.list", function(_users){
+						
+						$usercount.text(_users.length);
+						userlist = _.sortBy(_users, "yhteystiedot.nimi.etu")
+						$usermenu.find(".usritm-lnk").remove();
+						userlist.forEach(function(usr){
+							$usermenu.append($("<li class='usritm-lnk'><a class='nav-label' href='/user/edit/"+usr._id+"'>"+usr.yhteystiedot.nimi.etu+" "+usr.yhteystiedot.nimi.suku+"</a></li>"));
+						});
+					});
+
+					// Päivitä asiakkaas menuun
+					var $customercount 	= $(".customer-count");
+					var $customermenu 	= $("li#customerlista-menuitem").find(".nav-second-level");
+					IOclient.on("customer.list", function(_customers){
+						
+						$customercount.text(_customers.length);
+						customerlist = _.sortBy(_customers, "nimi")
+						$customermenu.find(".csritm-lnk").remove();
+						customerlist.forEach(function(csr){
+							$customermenu.append($("<li class='csritm-lnk' data-id='"+csr._id+"'><a class='nav-label' href='/customer/edit/"+csr._id+"'>"+csr.nimi+"</a></li>"));
+						});
+					});
+
+					
+					// Serveri lähettää notifyn userille
+					IOclient.on("NOTIFY", function(notify){
+						if($("#note_"+notify._id).length== 0){
+							var $note 		= $("<div id='note_"+notify._id+"' data-id='"+notify._id+"' class='note "+(notify.tyyppi || "info") +"'><span class='time'>"+moment(notify.aika).format("DD.MM.YYYY HH:mm")+"</span><h4>"+notify.otsikko+"</h4><p>"+notify.sisalto+"</p></div>")
+							var $kuittaa 	= $("<button class='close'>Kuittaa luetuksi</button>");
+							
+							if(notify.eiLuettu == true) 
+								$note.addClass("unread");
+							
+							if(notify.eiNahty === true){
+								$note.addClass("unseen");
+								if(notify.eiPopupped === true){
+									toastr[notify.tyyppi](notify.sisalto,notify.otsikko);
+									IOclient.emit("popupped", notify._id)
+								}
+							}
+							
+							$note.append($kuittaa);
+							$note.prependTo($(".notifys"));
+							$kuittaa.on("click", function(){
+								var $n = $(this).closest(".note");
+								
+								updateNotifyToRead($n.data("id"));
+								
+								$n.fadeOut(function(){
+									$(this).remove();
+									updateNotifyCounter();
+								});
+							});
+							updateNotifyCounter();
+						}
+						
+					});
+					
+					IOclient.on("joined", function(){
+						IOuser.joined = true;
+						IOclient.emit("req.admin.client.list")
+					});
+					
+					IOclient.on('disconnect', function (err) {
+						connectionLost = true;
+						$("#connLost").fadeIn();
+					});
+				
+					IOclient.on("admin.client.list", function(clients){
+					
+						var $insertPoint = $("#menuClientList li").first();
+						
+						clients.forEach(function(client){
+							var $menuItem = $("<li><a class='nav-label' href='/admin/client/"+client._id+"'>"+(client.nimi||"Nimetön")+"</a></li>");
+							$menuItem.insertAfter($insertPoint)
+						
+						});
+					});
+					
+					IOclient.on("campaign.active", function(data){
+						activeCampaignItem(data)
+					});
+					
+					IOclient.on("user.attach", function(data){
+					
+						// Lisää kampanja soittolistaan jos ei olemassa
+						var $c = $('#'+data.campaign._id+'-menulink');
+						
+						if($c.length == 0){
+							var $campMenuItem = $('<li class="soittolista-link" id="'+data.campaign._id+'-menulink"><a href="/campaign/view/'+data.campaign._id+'">'+data.campaign.nimi+'<span class="label label-info pull-right call-count">'+data.totalCalls+'<i></span></a></li>')
+							$campMenuItem.appendTo($("#soittolista-menuitem .nav-second-level")).fadeIn();
+						}
+						else {
+						
+							$c.find(".call-count").text(parseInt($c.find(".call-count").text())+data.totalCalls);
+							
+						}
+					});
+					
+				
+					
+					if(userlevel > 2) {
+						
+						IOclient.on("customer.add", function(data){
+							toastr['success']("Uusi asiakas \"<strong>"+data.obj.nimi+"</strong>\" luotu.", "Ilmoitus")
+							IOclient.emit("req.customer.list");
+						});
+						
+						IOclient.on("customer.del", function(data){
+							toastr['success']("Asiakas \"<strong>"+data.nimi+"</strong>\" on poistettu.", "Ilmoitus")
+							IOclient.emit("req.customer.list");
+						});
+						
+						/*
+							Userlista
+						*/
+						if(userlevel == 4){
+							IOclient.on("admin.user.list", function(users){
+								//var grouped = _.groupBy(users, ")
+								//console.log(users)
+								//console.log(users)
+								
+								Object.keys(users).forEach(function(client){
+									var clientName = users[client].clientName;
+								
+									Object.keys(users[client].users).forEach(function(_usr){
+										var usr = users[client].users[_usr]
+									
+										var userNimi = usr.nimi
+										if(userNimi.trim().length == 0)
+											userNimi = usr.email ||"Tiedot puuttuu"
+										var $item = $("<li class='usritm-lnk'><a href='/user/edit/"+usr.id+"' class='nav-label'>"+userNimi+"</a></li>").insertAfter($("#menuUserList .nav-second-level li").first())
+										
+									});
+									$("#menuUserList .count").text(users.length)
+									
+								});
+								
+								
+								/*
+								users.forEach(function(user){
+								
+									var userNimi = user.nimi
+									if(userNimi.trim().length == 0)
+										userNimi = user.email ||"Tiedot puuttuu"
+										var $item = $("<li class='usritm-lnk'><a href='/user/edit/"+user._id+"' class='nav-label'>"+userNimi+"</a></li>").insertAfter($("#menuUserList .nav-second-level li").first())
+								});
+								$("#menuUserList .count").text(users.length)
+								*/
+							});
+						}
+					}
+					
+					function activeCampaignItem(data){
+						
+						$("#menu-campaign-"+data.id+".camp-edit-link").toggleClass("status-active status-inactive");
+						
+						if(data.value === false)
+							$("#"+data.id+"-menulink").addClass("hidden");
+							
+						else
+							$("#"+data.id+"-menulink").removeClass("hidden");
+						updateCallListCount();
+					}
+		block widget-scripts
+		block content-scripts

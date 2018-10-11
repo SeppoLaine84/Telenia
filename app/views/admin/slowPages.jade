@@ -1,0 +1,72 @@
+extends ../adminLayout
+block content
+	#page-wrapper.gray-bg
+			.row.wrapper.border-bottom.white-bg.page-heading
+				.col-xs-12
+					h1
+						i.fa.fa-spinner.fa-pulse.fa-fw.page-title-icon
+						span.page-title= loadingText
+			.wrapper-content: .row: #main-content.col-xs-12
+				.row: .col-xs-12#errorGrid
+					.jumbotron.hidden
+						h1 
+							i.fa.fa-fw.fa-thumbs-o-up.fa-lg.text-success
+							| Ei hitaita sivuja
+					.ibox.slowPage.template.hidden
+						
+						.ibox-content
+							.row
+								.col-xs-12.col-md-4.col-lg-1
+									h2.occurance-count
+									small.text-bold
+										span avg  
+										span.avgTime.pull-right
+										.clearfix
+										span max 
+										span.maxTime.pull-right
+										.clearfix
+										span min 
+										span.minTime.pull-right
+								.col-xs-12.col-md-2.col-lg-9
+									h3.url
+									
+								.col-xs-12.col-md-6.col-lg-2
+									button.btn.btn-warning.btn-xs.removePage.pull-right
+										i.fa.fa-fw.fa-trash
+										| Poista
+block content-scripts	
+	script.
+		IOclient.on("joined", function(){
+			IOclient.emit("req.admin.slowPage.list")
+		});
+		
+		IOclient.on("admin.slowPage.list", function(slowPages){
+			
+			if(Object.keys(slowPages).length > 0) $(".jumbotron").addClass("hidden")
+			else $(".jumbotron").removeClass("hidden")
+		
+			var $template = $(".slowPage.template")
+			Object.keys(slowPages).forEach(function(url){
+				var page = slowPages[url];
+				$elem 	= $template.clone();
+				$elem.removeClass("hidden template");
+				$elem.find(".occurance-count").text(page.length)
+				$elem.find(".url").text(url)
+				var minTime = 0;
+				var avgTime = 0;
+				var maxTime = 0;
+				var i = 0;
+				page.forEach(function(p){
+					if(i == 0) minTime = p.meta.time;
+					else if(p.meta.time < minTime) minTime = p.meta.time;
+					i++;
+					if(p.meta.time > maxTime)maxTime = p.meta.time
+					avgTime += p.meta.time;
+				});
+				avgTime /= page.length;
+				$elem.find(".avgTime").text(parseInt(avgTime)+"ms")
+				$elem.find(".maxTime").text(parseInt(maxTime)+"ms")
+				$elem.find(".minTime").text(parseInt(minTime)+"ms")
+				$elem.insertAfter($template)
+			});
+		});

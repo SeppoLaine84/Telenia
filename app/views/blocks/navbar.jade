@@ -1,0 +1,28 @@
+nav#main-nav
+	#nav-logo
+		img.logo(src='images/logo_pieni.png', alt='MyyntiPRO')
+	ul
+		
+		li: a.direct-link.logout(href='/logout'): i.fa.fa-power-off
+		if(user.userlevel <= 3)
+			li: a.direct-link(href='/report') Raportit
+			if(user.userlevel > 1)	
+				li: a.direct-link(href='/customer') Asiakkaat
+				li: a.direct-link(href='/user') Käyttäjät
+			li.selected: a(href='/') Soittolista 
+				span.calls-left 0
+			if(user.userlevel > 1)
+				li: a.direct-link(href='/campaign') Kampanjat
+			li: a(href='/') Etusivu
+			li: a.attn(href='#')
+				i.fa.fa-exclamation-triangle(style='vertical-align:middle')
+				span.notify-count
+					span.total-notify-count(style='padding:0') 0
+					span.new-notify-count(style='padding-left:5px') (0)
+					
+		else if(user.userlevel == 4)
+			li: a.direct-link(href='/superadmin/admn') SuperAdmin
+			li: a.logLink(href='superadmin/logs') Logit
+			li: a(href='/') Etusivu
+	
+	

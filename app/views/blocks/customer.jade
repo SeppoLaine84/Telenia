@@ -1,0 +1,44 @@
+li.customer
+	button.expand
+		span
+	.short-details
+		h3.customer-name= customer.nimi
+			small.not-saved(style="display:none")  (Ei tallennettu)
+	form#customer-details.details.row
+		.col-lg-6
+			input#cid(type="hidden" value="#{customer._id}" name='_id')
+			h4 Yhteystiedot
+			label(for='nimi') Yrityksen nimi
+			input#customer-name.form-control(type='text', name='nimi' value="#{customer.nimi}")
+			label(for='vat') Y-tunnus
+			input#customer-vat.form-control(type='text', name='vat' value="#{customer.vat}")
+			label(for='yhteystiedot.nimi') Yhteyshenkilön nimi
+			input.form-control(type='text', name='yhteystiedot.nimi' value="#{customer.yhteystiedot.nimi}")
+			label(for='yhteystiedot.puhelin') Puhelin
+			input.form-control(type='tel', name='yhteystiedot.puhelin' value="#{customer.yhteystiedot.puhelin}")
+			label(for='yhteystiedot.osoite.katu') Katuosoite
+			input.form-control(type='text', name='yhteystiedot.osoite.katu' value="#{customer.yhteystiedot.osoite.katu}")
+			label(for='yhteystiedot.osoite.postinro') Postinumero
+			input.form-control(type='tel', name='yhteystiedot.osoite.postinro' value="#{customer.yhteystiedot.osoite.postinro}")
+			label(for='yhteystiedot.osoite.kunta') Postitoimipaikka
+			input.form-control(type='text', name='yhteystiedot.osoite.kunta' value="#{customer.yhteystiedot.osoite.kunta}")
+		.col-lg-6
+			h4 Kirjautumistiedot
+			label(for='yhteystiedot.email') Sähköposti
+			input.form-control(type='email', name='yhteystiedot.email', placeholder='sähkö@posti.fi' value="#{customer.yhteystiedot.email}")
+			//span.error Vituiks meni tässä kohtaa
+			label(for='pwd') Salasana
+			input.form-control.disabled(disabled="true" type='password', name='pwd' value="#{customer.pwd}")
+			label(for='subDomain')
+				| Kirjautumis-alidomain: 
+				strong xxx
+				| .myyntipro.fi [a-z]
+			input.form-control(type='text', name='subDomain' value="#{customer.subDomain}")
+			hr
+			button.submit.save-customer
+				i.fa.fa-pencil
+				|  Päivitä tiedot
+			hr
+			button.submit.red.delete-customer
+				i.fa.fa-trash
+				|  Poista asiakas

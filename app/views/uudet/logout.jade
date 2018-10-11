@@ -1,0 +1,36 @@
+extends ../layout
+block content	
+	#page-wrapper.gray-bg
+		.row.wrapper.border-bottom.white-bg.page-heading
+			h1
+				i.fa.fa-spinner.fa-pulse.fa-fw.page-title-icon
+				span.page-title= loadingText
+						
+		.wrapper-content
+			.row
+				#main-content.col-xs-12.gray-bg.animated.bounceInRight
+					.ibox
+						.ibox-title
+							h4 Kirjaathan vielä käyttämäsi tunnit
+						.ibox-content
+							table#rapport.table.table-striped.table-hover
+								thead
+									tr(style='border:0;')
+										th(style='border:0;') Kampanjan nimi
+										th(style='border:0;') OK
+										th(style='border:0;') EI
+										th(style='border:0;') EV
+										th(style='border:0;') SU
+										th(style='border:0;') TJ
+										th(style='border:0;') Tunnit
+										th.text-center(colspan="2" style='border:0;') Palkkio
+									tr
+										th(style='border:0;')
+										th(style='border:0;')
+										th(style='border:0;')
+										th(style='border:0;')
+										th(style='border:0;')
+										th(style='border:0;')
+										th(style='border:0;')
+										th.text-center(style='border:0;') Tunti (#{})
+										th.text-center(style='border:0;') 0€

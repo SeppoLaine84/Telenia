@@ -1,0 +1,17 @@
+.predefinedDays
+	ul.nav.nav-tabs
+.tools
+	input.hidden.form-control(type='text' name='daterange' style='width:auto;margin-right:12px;')
+	.checkbox.checkbox-circle.checkbox-inline.checkbox-info
+		input#showEmpty(type='checkbox')
+		label(for='showEmpty') Näytä tyhjät
+	.checkbox.checkbox-circle.checkbox-inline.checkbox-info
+		input#showTotalsOnly(type='checkbox')
+		label(for='showTotalsOnly') Näytä vain saldot
+	.checkbox.checkbox-circle.checkbox-inline.checkbox-info
+		input#separateUsers(type='checkbox')
+		label(for='separateUsers') Erittele käyttäjät
+			
+	button.btn.btn-info.btn-sm.btn-outline#printReport(style='margin-left:10px')
+		i.fa.fa-fw.fa-print
+		| Tulosta

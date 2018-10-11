@@ -1,0 +1,111 @@
+extends ../adminLayout
+block additionalOverlay
+	#mail-overlay.overlay.hidden(style="position:fixed;width:100%;height:100%;left:0;top:0;z-index:50000;background-color: rgba(10,24,42,.65);")
+		.container
+			.ibox
+				.ibox-title
+					h3 asd
+						.close-mail-overlay.pull-right
+							i.fa.fa-times
+				.ibox-content
+					iframe#mail-container(style='width:100%')
+block content
+	#page-wrapper.gray-bg
+			.row.wrapper.border-bottom.white-bg.page-heading
+				.col-xs-12
+					h1
+						i.fa.fa-spinner.fa-pulse.fa-fw.page-title-icon
+						span.page-title= loadingText
+			.wrapper-content: .row: #main-content.col-xs-12
+				ul#email-tab.nav.nav-tabs
+					li.tab.active: a(href="#sendgrid" data-toggle='tab') Tapahtumat
+					li.tab: a(href="#sentmail" data-toggle='tab') Lähetetyt postit
+				.tab-content
+					#sendgrid.tab-pane.active
+						.ibox: .ibox-content
+							#toolbar
+								
+							#email-activitylist
+								.activity.template.hidden
+									.row
+										.col-md-2
+											.event open
+										.col-md-6
+											.email seppo.laine@rausku.fi
+										.col-md-2
+											.timestamp 12.2.2012 23:22:11
+										.col-md-2
+											.info
+					#sentmail.tab-pane
+						.ibox: .ibox-content
+							#toolbar
+							#header
+								.row.text-bold
+									.col-md-2 Aihe
+									.col-md-8 Vastaanottaja(t)
+									.col-md-2 Aika
+									hr
+							#sent-mails
+								.mail.template.hidden
+									.row
+										.col-md-2
+											.event
+										.col-md-8
+											.email: a(href="#") 
+										.col-md-2
+											.timestamp
+										
+				
+block content-scripts	
+
+	script.
+		IOclient.on("joined", function(){
+			IOclient.emit("req.admin.email.activity.list")
+		});
+		var $activityTemplate 	= $(".activity.template");
+		var $mailTemplate 		= $(".mail.template");
+		var $activityList 		= $("#email-activitylist");
+		var $mailList 			= $("#sent-mails");
+		
+		IOclient.on("admin.email.activity.list", function(emails){
+		
+			emails.sendgrid.forEach(function(email){
+			
+				email.meta.body.forEach(function(body){
+					
+					var $act = $activityTemplate.clone();
+					$act.removeClass("template hidden")
+					$act.find(".timestamp").text(moment(body.timestamp).format("DD.MM.YYYY HH:mm:ss"))
+					$act.find(".email").text(body.email)
+					$act.find(".event").text(body.event)
+					$act.appendTo($activityList)
+					
+				});
+				
+			});
+			emails.emails.forEach(function(mail){
+
+				var $mail = $mailTemplate.clone();
+				$mail.removeClass("hidden template");
+				$mail.attr("data-id", mail._id);
+				$mail.find(".timestamp").text(moment(mail.timestamp).format("DD.MM.YYYY HH:mm:ss"))
+				$mail.find(".event").text(mail.meta.cateogory)
+				var rec = "Undefined";
+				if(mail.meta.receivers)
+					if(Array.isArray(mail.meta.receivers))
+						rec = mail.meta.receivers.join(", ");
+					else {
+						rec = mail.meta.receivers;
+					}
+				$mail.find(".email a").text(rec);
+				$mail.appendTo($mailList);
+				$mail.find(".email a").on("click", function(){
+	
+					$("#mail-overlay").removeClass("hidden").find("#mail-container").contents().find('html').html(mail.meta.html)
+				});
+			});
+		});
+		
+		$("body").on("click", ".close-mail-overlay", function(){
+			$("#mail-overlay").addClass("hidden")
+		});

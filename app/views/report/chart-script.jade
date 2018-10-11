@@ -1,0 +1,410 @@
+block widget-scripts
+	script(src="/js/plugins/chartJs/Chart.min.js")
+
+block content-scripts	
+	script.
+		
+		var userlvl 	= #{user.userlevel};
+		var usr 		= !{JSON.stringify(user)}
+		var uiOptions 	= !{JSON.stringify(user.uiOptions)}
+		
+		$(".page-title").text("#{pageTitle}");
+		$(".page-title-icon").removeClass().addClass("page-title-icon fa fa-fw fa-#{pageIcon}");
+		var page 		= "#{page}";
+		
+		var events = {};
+				
+		if(userlvl < 4){
+			/* Viikon kuittaukset chart */
+			var weeklyData;
+			var allData;
+		
+			var options = {
+				scaleShowLine: true,
+				angleShowLineOut: true,
+				scaleShowLabels: true,
+				scaleBeginAtZero: true,
+				angleLineColor: "rgba(0,0,0,.1)",
+				angleLineWidth: 1,
+				pointLabelFontFamily: "'Arial'",
+				pointLabelFontStyle: "normal",
+				pointLabelFontSize: 10,
+				pointLabelFontColor: "#666",
+				pointDot: true,
+				pointDotRadius: 3,
+				pointDotStrokeWidth: 1,
+				pointHitDetectionRadius: 20,
+				datasetStroke: true,
+				datasetStrokeWidth: 2,
+				datasetFill: true,
+				responsive:true,
+				
+				scales: {
+					yAxes: [{
+						ticks: {
+							// Create scientific notation labels
+							callback: function(value, index, values) {
+								return value.toFixed(0);
+							}
+						}
+					}]
+				},
+				maintainAspectRatio: false,
+				
+				display:true,
+			
+				multiTooltipTemplate: "<%= datasetLabel %> - <%= value %>kpl",
+				tooltipTemplate: "<%= datasetLabel %> - <%= value %>kpl",
+			
+			}
+			if($("#weeklyChart").length > 0 || $("#weeklyUserChart").length > 0){
+				$.ajax({
+					url:"/report/get/kuittaukset/week",
+					dataType:"JSON",
+					type:"POST",
+					
+					success: function(data){
+					
+						weeklyData = data;
+						if($("#weeklyChart").length > 0)
+							if(page=="etusivu" && uiOptions.etusivu.widgets.weeklyChart.show == 1)
+								viikonKuittaukset(weeklyData)
+							else if(page != "etusivu")
+								viikonKuittaukset(weeklyData)
+						if($("#weeklyUserChart").length > 0)	
+							if(page=="etusivu" && uiOptions.etusivu.widgets.weeklyUserChart.show == 1)
+								viikonKuittauksetByUser(weeklyData, "weeklyUserChart")
+							else if(page != "etusivu")
+								viikonKuittauksetByUser(weeklyData, "weeklyUserChart")
+					},
+				});
+			}
+			if($("#timespanChart").length > 0)	{
+				$.ajax({
+					url:"/report/get/kuittaukset/all",
+					dataType:"JSON",
+					type:"POST",
+					
+					success: function(data){
+					
+						allData = data;
+						
+						if(page=="etusivu" && uiOptions.etusivu.widgets.timespanChart.show == 1)
+							myynnitAjankohta(allData, "timespanChart")
+						else if(page != "etusivu")
+							myynnitAjankohta(allData, "timespanChart")
+						
+						
+					},
+				});
+			}
+			
+			$(".showWidget").on("click", function(){
+				var varName = $(this).attr("name");
+				var value	= $(this).is(":checked")?1:0;
+				if(page == "etusivu" && value == 0){
+					$(this).closest(".widgetti").fadeOut()
+				}
+				$.ajax({
+					url:		"/user/set",
+					dataType:	"JSON",
+					type:		"POST",
+					data: {
+						target: varName,
+						value:	value,
+						id: 	'#{user._id}',
+					},success: function(response){
+						//console.log(response);
+					}
+				})
+			});
+			
+			
+			function viikonKuittaukset(data){
+				var currentPoints 	= {"OK": 0, "EI": 0, "EV": 0, "SU": 0, "TJ": 0, "V": 0};
+				var lastWeekPoints 	= {"OK": 0, "EI": 0, "EV": 0, "SU": 0, "TJ": 0, "V": 0};
+				var sc 				= [];
+				var scH				= [];
+				Object.keys(currentPoints).forEach(function(key){
+					sc.push(statusColorsRGBA(key.toLowerCase(), 0.2))
+					scH.push(statusColorsRGBA(key.toLowerCase(), 0.4))
+				});
+				
+				data.current.forEach(function(point){
+					if(point.data)
+						currentPoints[point.data] += 1;
+				});
+				var _p = [];
+				Object.keys(currentPoints).forEach(function(p){
+					_p.push(currentPoints[p]);
+				});
+				
+				// Edellinen viikko
+				data.previous.forEach(function(point){
+					if(point.data)
+						lastWeekPoints[point.data] += 1;
+				});
+				
+				var _p1 = [];
+				Object.keys(lastWeekPoints).forEach(function(p){
+					_p1.push(lastWeekPoints[p]);
+				});
+				
+				var data = {
+					labels: ["OK", "EI", "EV", "SU", "TJ", "V"],
+					
+					datasets: [
+						{
+							label: "Tämän viikon kuittaukset",
+							
+							backgroundColor: sc,
+							borderColor: "rgba(22,22,22,.2)",
+							borderWidth: 1,
+							hoverBackgroundColor: scH,
+							hoverBorderColor: "rgba(22,22,22,.4)",
+							data: _p,
+							
+						},{
+							label: "Edellisen viikon kuittaukset",
+							backgroundColor: "rgba(220,220,220,0.5)",
+							borderColor: "rgba(22,22,22,0.2)",
+							borderWidth: 1,
+							hoverBackgroundColor: "rgba(220,220,220,0.75)",
+							hoverBorderColor: "rgba(22,22,22,0.4)",
+							data: _p1
+						},
+					]
+				};
+
+				var ctx 		= document.getElementById("weeklyChart").getContext("2d");
+				var chart = new Chart(ctx, {
+					type: 'bar',
+					data: data,
+					options: options
+				});
+				
+			}
+			
+			function viikonKuittauksetByUser(data, elemID){
+				var currentPoints 		= {};
+				var currentSales 		= {};
+				var colors 				= [];
+				var hoverColors 		= [];
+				var salesColors 		= [];
+				var salesHoverColors	= [];
+				var _labels 			= [];
+				var _p 					= [];
+				var _p1					= [];
+				
+				data.users.forEach(function(point){
+					
+					// Luo nimi
+					var uname = point.name.etu + " " + point.name.suku;
+					
+					// Generoi värit
+					/*colors.push(colorful_language(uname, 0.2))
+					hoverColors.push(colorful_language(uname, 0.4))
+					salesColors.push(colorful_language(uname+"_sales", 0.2))
+					salesHoverColors.push(colorful_language(uname+"_sales", 0.4))
+					*/
+					
+					// Resetoi pojot
+					currentPoints[uname] 	= 0;
+					currentSales[uname] 	= 0;
+					
+					
+					data.current.forEach(function(p){
+						
+						if(p.userName == uname){
+							if(!isNaN(currentPoints[uname])){
+								currentPoints[uname] += 1;
+							} 
+							if(p.data == "OK"){
+								currentSales[uname] += 1;
+							}
+						}
+						
+					});
+				});
+				
+				
+				Object.keys(currentPoints).forEach(function(p){
+					_labels.push(p);
+					_p.push(currentPoints[p])
+					_p1.push(currentSales[p])
+				});
+			
+				
+				var data = {
+					labels: _labels,
+					datasets: [
+						{
+							label: "Tämän viikon kaikki kuittaukset",
+							backgroundColor: "rgba(220,220,220,0.5)",
+							borderColor: "rgba(22,22,22,0.2)",
+							borderWidth: 1,
+							hoverBackgroundColor: "rgba(220,220,220,0.75)",
+							hoverBorderColor: "rgba(22,22,22,0.4)",
+							data: _p,
+							
+						},{
+							label: "Tämän viikon myynnit",
+								
+							backgroundColor: "rgba(26,179,148,0.2)",
+							borderColor: "rgba(26,179,148,.8)",
+							borderWidth: 1,
+							hoverBackgroundColor: "rgba(26,179,148,0.4)",
+							hoverBorderColor: "rgba(6,159,128,1)",
+							data: _p1,
+							
+						},
+					]
+				};
+
+				var ctx 		= document.getElementById(elemID).getContext("2d");
+				var timespanChart = new Chart(ctx, {
+					type: 		'bar',
+					data: 		data,
+					options: 	options
+				});
+			}
+			
+			
+			function myynnitAjankohta(data, elemID){
+				var currentPoints 	= {};
+								
+				data.current.forEach(function(p){
+					
+					if(p.data == "OK"){
+											
+						if(!currentPoints[moment(p.aika).minute(0).format("HH:mm")])
+							currentPoints[moment(p.aika).minute(0).format("HH:mm")] = 1;
+						else
+							currentPoints[moment(p.aika).minute(0).format("HH:mm")] += 1;
+					}
+					
+					
+					
+				});
+				
+				
+				var _labels = [];
+				var _p 		= [];
+				
+				Object.keys(currentPoints).forEach(function(p){
+					var t = p.split(":");
+					_labels.push(moment().hour(t[0]).minute(0).format("HH:mm"));
+				
+				});
+				_labels.sort();
+		
+				_labels.forEach(function(i){
+					_p.push(currentPoints[i])
+				});
+				
+				var data = {
+					labels: _labels,
+					datasets: [
+						{
+							label: "Myynnit",
+							backgroundColor: "rgba(26,179,148,0.2)",
+							borderColor: "rgba(26,179,148,.8)",
+							borderWidth: 1,
+							hoverBackgroundColor: "rgba(26,179,148,0.4)",
+							hoverBorderColor: "rgba(6,159,128,1)",
+							lineTension: 0.25,
+							data: _p,
+							
+						},
+					]
+				};
+
+				var ctx 		= document.getElementById(elemID).getContext("2d");
+				var timespanChart = new Chart(ctx, {
+					type: 'line',
+					data: data,
+					options: options
+				});
+				
+				
+			}
+			
+			$(events).on("menu.ready", function(){
+				
+				var c = $("#side-menu .soittolista-link").not(".hidden").length;
+				$(".campaignCount").text(c)
+			});
+			
+		
+			function soittojenEdistyminen(){
+				
+				$.ajax({
+					url: "/user/get/statuses",
+					type:"POST",
+					dataType:"JSON",
+					success: function(resp){
+						$("#callProgressPieWidget .salesPower").text(Math.ceil(resp.calls / (resp.calls - resp.ok)))
+											
+						var data = {
+							labels:["Soittamattomat", "Myynnit","Soitetut"],
+							datasets: [{
+								label: "Statistiikkaa",
+								backgroundColor: ["rgba(226,29,48,0.2)","rgba(26,179,18,0.2)","rgba(26,179,148,0.2)"],
+								borderColor: "rgba(88,88,88,.5)",
+								borderWidth: 1,
+								hoverBackgroundColor: "rgba(22,22,22,0.4)",
+								hoverBorderColor: "rgba(22,22,22,.8)",
+								
+								data: [resp.calls, resp.ok, resp.total-resp.calls],
+							}
+							]
+						};
+						var opt = options;
+						opt.showScale = false;
+					
+					
+						var ctx 			= document.getElementById("callProgressPieChart").getContext("2d");
+						var myDoughnutChart = new Chart(ctx, {
+							type: 		'doughnut',
+							data: 		data,
+							options: {
+								showScale:false,
+								legend: {display:false},
+							}
+						});
+						data = {
+							labels:["Myynnit","Soitetut"],
+							datasets: [{
+								label: "Statistiikkaa",
+								backgroundColor: ["rgba(26,179,18,0.2)","rgba(226,29,48,0.2)"],
+								borderColor: "rgba(88,88,88,.5)",
+								borderWidth: 1,
+								hoverBackgroundColor: "rgba(22,22,22,0.4)",
+								hoverBorderColor: "rgba(22,22,22,.8)",
+								
+								data: [resp.ok, resp.total-resp.calls],
+							}
+							]
+						};
+						var opt = options;
+						opt.showScale = false;
+					
+					
+						var ctx 			= document.getElementById("callProgressPieChart1").getContext("2d");
+						var myDoughnutChart = new Chart(ctx, {
+							type: 		'doughnut',
+							data: 		data,
+							options: {
+								showScale:false,
+								legend: {display:false},
+							}
+						});
+					},
+				})
+				
+			}
+			if(uiOptions.etusivu.widgets.callProgressPie.show == 1)
+				soittojenEdistyminen();
+			
+		}
+		else if(userlvl == 4){$("#superadmin-container").load("/superadmin");}

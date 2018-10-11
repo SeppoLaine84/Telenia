@@ -1,0 +1,21 @@
+#customerPage
+	#pageBody(class='#{cPage.customizations.pageBody.class}' data-updateTarget='customizations' style='background:#{cPage.customizations.pageBody.background};color:#{cPage.customizations.pageBody.color}')
+		.jumbotron
+			.row
+				.col-xs-12.col-md-6
+					h1#ylaotsikko.editor_text(class='#{cPage.customizations.title.class}' data-updateTarget='customizations' data-dbKey='title' data-dbSubKey='text')= cPage.customizations.title.text
+					h3.text-bold#alaotsikko.editor_text(class='#{cPage.customizations.footer.class}' data-updateTarget='customizations' data-dbKey='footer' data-dbSubKey='text')= cPage.customizations.footer.text
+					p#help.editor_text(class='#{cPage.customizations.help.class}' data-dbKey="help" data-updateTarget='customizations' data-dbSubKey='text')= cPage.customizations.help.text
+				.col-xs-12.col-md-6
+					.ibox-content
+						form(class="m-t" role="form")
+							legend#form.editor_text(class='#{cPage.customizations.help.class}' data-updateTarget='customizations' data-keyFromID="true" data-dbKey="legend" data-dbSubKey='text')= cPage.customizations.form.legend.text
+							
+							each key in cPage.meta.campaign.keys
+								- var k = key.name.replace(' ','_').toLowerCase();
+																
+								.form-group
+									input.form-control(name="ckey-#{k}" data-updateTarget='campaignMeta' type='text' placeholder="#{key.name}") 
+							
+							.form-group
+								.btn.btn-primary.block.full-widt.m-b Lähetä

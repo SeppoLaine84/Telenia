@@ -1,0 +1,113 @@
+li#report-range: .row
+	.col-xs-12.col-md-4.col-lg-3
+		include tools/treeview
+	.col-xs-12.col-md-8.col-lg-9
+		.details
+			h2.no-reports.text-uppercase Ei raportoitavaa
+			.report-table.template(style='display:none')
+				.row: .col-xs-12
+					h2.customer-name
+				.row
+					.col-xs-12.col-md-6.col-lg-4
+						table.table.table-bordered.table-striped(style='font-size:12px')
+							thead(style='color:#333')
+								th(colspan="3") Materiaali
+							tbody
+								tr
+									td Yhteensä
+									td.totalContacts.text-bold
+								tr
+									td Jäljellä
+									td.contactsLeft.text-bold
+								tr
+									td Käsittely %
+									td.totalProgress.text-bold(data-affix="%")
+					.col-xs-12.col-lg-8
+						table.table.table-bordered.table-striped(style='font-size:12px')
+							thead(style='color:#333')
+								tr
+									th.text-right Tilaukset €
+									th.text-right Tilaukset kpl
+									
+									th.text-center EI
+									th.text-center SU
+									th.text-center TJ
+									th.text-center V
+									th.text-right Kontaktit
+									th.text-right Tunnit
+									th.text-right Kontaktit/h
+									th.text-right Kokonaisveloitus
+								
+							tbody
+								tr
+									th.ordersValue.text-right(data-affix="€")
+									
+									th.totalStatusOK.text-center
+									th.totalStatusEI.text-center
+									th.totalStatusSU.text-center
+									th.totalStatusTJ.text-center
+									th.totalStatusV.text-center
+									th.totalCalls.text-right
+									th.totalHours.text-right(data-affix="h").text-right
+									th.contactsPerHour.calc.text-right(data-type="division" data-firstCalc='.total-contacts' data-secondCalc='.total-hours' data-affix="\h")
+									th.totalPrice.text-right(data-affix="€")
+			
+				.table-responsive.temp(style='display:none')
+					table.table.table-hover
+						h3.text-uppercase.additional-info
+						thead
+							td.campaign-nimi Nimi
+							td OK
+							td EV
+							td SU
+							td EI
+							td TJ
+							td V
+							td Kontaktit<br/>yhteensä
+							td Tunnit
+							td Provisio
+							td Tuntipalkka
+							td € yhteensä
+						tbody.template
+							tr.table-row.template.hidden
+								td.pvm
+								td.status-ok.calculate 0
+								td.status-ev.calculate 0
+								td.status-su.calculate 0
+								td.status-ei.calculate 0
+								td.status-tj.calculate 0
+								td.status-v.calculate 0
+								td.calls.calculate 0
+								td.hours.calculate 0.00
+								td.provisio.calculate 0.00
+								td.palkka_hourly.calculate 0.00
+								td.money.calculate 0.00
+						tbody.body-content
+						tbody.body-total
+							tr.info.text-bold
+								td: strong YHTEENSÄ
+								td.status-ok.value 0
+								td.status-ev.value 0
+								td.status-su.value 0
+								td.status-ei.value 0
+								td.status-tj.value 0
+								td.status-v.value 0
+								td.calls.value 0
+								td.hours.value 0.00
+								td.provisio.value 0.00
+								td.palkka_hourly.value 0.00
+								td.money.value 0.00
+						tbody.body-power
+							tr.success.text-bold
+								td: strong TEHO
+								td.status-ok.value(data-type="%") 0.00
+								td.status-ev.value(data-type="%") 0.00
+								td.status-su.value(data-type="%") 0.00
+								td.status-ei.value(data-type="%") 0.00
+								td.status-tj.value(data-type="%") 0.00
+								td.status-v.value(data-type="%") 0.00
+								td.calls.value(data-type="%") 0.00
+								td.hours.value(data-type="ho") 0.00
+								td.provisio.value(data-type="h") 0.00
+								td.palkka_hourly.value(data-type="h") 0.00
+								td.money.value(data-type="e") 0.00

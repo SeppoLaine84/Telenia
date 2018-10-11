@@ -1,0 +1,19 @@
+.chartWidget.widgetti.feed#kuittausFeedWidget.hidden
+	.ibox.float-e-margins
+		.ibox-title
+			h5 Viimeisimmät kuittaukset
+		.ibox-content
+			h2.loading.text-center Ladataan kuittauksia...
+			.feed-activity-list
+				.feed-element.template.hidden.animated
+					a.pull-left(href="#")
+						div.ball(style='font-size:1.5em').text-center
+							span.status-text
+					.media-body(style='margin-left:48px')
+						small.pull-right.aikaDiff
+						strong.userName
+						
+						span.payloadData
+						br
+						small.text-muted.aika
+		

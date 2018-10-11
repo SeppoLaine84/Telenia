@@ -1,0 +1,164 @@
+extends ../layout
+block content
+	#page-wrapper.gray-bg
+		.row.wrapper.border-bottom.white-bg.page-heading
+			h1
+				i.fa.fa-spinner.fa-pulse.fa-fw.page-title-icon
+				span.page-title= loadingText
+			
+		.wrapper-content
+			.row
+				#main-content.col-xs-12
+					.ibox.customerTable.template.hidden
+						.ibox-header
+							h3.ibox-title.customerName
+							
+						.ibox-content
+							div.table-responsive
+								table.table.table-striped.table-condensed.table-hover.table-bordered(data-order='[[ 0, "desc" ]]' data-page-length='25')
+									thead
+										th pvm.
+										th Kampanja
+										th Asiakkaan nimi
+										th Osoite
+										th Puhelin
+										th Myyjä
+										//th 
+									tbody
+										tr.template.hidden
+											td
+												span(style='display:none').pvm
+												span.pvmFormat
+											td.campName
+											td.clientName
+											td.address
+											td.phone
+											td.seller
+											//td.text-center
+												//button.btn.btn-sm.btn-primary.acceptSale Hyväksy myynti
+block content-scripts
+	script.
+		var $orderTemplate 		= $(".order.template");
+		var $orderListTemplate 	= $(".orderList.template");
+		var $orderList			= $(".customerTable.template");
+		var $orders				= $("#main-content");
+		var payloadIDS 			= [];
+		var orders;
+	
+		IOclient.on("joined", function(){
+			IOclient.emit("req.team.orders", {limit:0});
+		});
+		
+		IOclient.on("team.orders", function(_orders){
+		
+			orders =_.groupBy(_orders, "customerName");
+	
+			
+			Object.keys(orders).forEach(function(_order){
+				
+				//var cust 			= _.groupBy(orders[_order], "campaingName");
+				var ords = orders[_order];
+	
+				var $customerTable	= $orderList.clone();
+				$customerTable.removeClass("template hidden").appendTo($orders).find(".ibox-title.customerName").text(_order);
+				
+				$.each(ords,function(idx, ord){
+					if(idx == 0)
+						$customerTable.attr("data-id", ord.customerID)	
+					
+					payloadIDS.push(ord.payloadID);
+					var $row = $customerTable.find("tr.template").clone();
+					$row.removeClass("template hidden").attr("data-id", ord.payloadID)	// Payload ID
+					
+					$row.find(".campName").text(ord.campaingName)
+					$row.find(".clientName").text(ord.payloadName)
+					$row.find(".pvmFormat").text(moment(ord.aika).format("DD.MM.YYYY"))
+					$row.find(".pvm").text(moment(ord.aika).format("YYYYMMDD"))
+					
+					$row.on("click", function(){
+						var _payloadData =  $(this).data("payload");
+						
+						viewPayload(ord, _payloadData);
+					});
+					
+					$row.appendTo($customerTable.find("tbody"));
+				});
+			})
+			
+		
+			
+			IOclient.emit("req.campaignitem.payloads", {payloads:payloadIDS});
+			
+			IOclient.on("campaignitem.payloads", function(payloads){
+			
+				payloads.payloads.forEach(function(pl){
+					if(pl.soitettu.length > 0){
+						var $row = $("tr[data-id='"+pl._id+"']");
+						var seller = pl.users.nimi;
+						
+						$row.find(".pvm").attr('data-linuxtime', moment(pl.soitettu[pl.soitettu.length -1].aika).format("X"))
+						$row.find(".seller").text(seller)
+						$row.find(".customerName").text(pl.customerName)
+						$row.data("payload", pl.payload);
+						pl.payload.forEach(function(_payload){
+							
+							if(_payload.name.toLowerCase() == "yrityksen nimi")
+								$row.find(".clientName").text(_payload.value||"Nimetön")
+							else if(_payload.name.toLowerCase() == "lähiosoite")
+								$row.find(".address").text(_payload.value||"Osoite puuttuu")
+							else if(_payload.name.toLowerCase() == "puhelinnumero")
+								$row.find(".phone").text(_payload.value||"Ei puhelinnumeroa")
+							
+						})
+					}
+				})
+				
+				$('.table').DataTable({
+					
+					dom: '<"html5buttons"B>lTfgitp',
+					buttons: [
+						{ extend: 'copy', title:"Leikepöydälle"},
+						{extend: 'csv'},
+						{extend: 'excel', title: 'Telenia - Tilaukset'},
+						{extend: 'pdf', title: 'Telenia - Tilaukset'},
+						{extend: 'print',
+							customize: function (win){
+								$(win.document.body).addClass('white-bg');
+								$(win.document.body).css('font-size', '10px');
+								$(win.document.body).find('table').addClass('compact').css('font-size', 'inherit');
+							}
+						}
+					],
+					language: {
+						processing:     "Ladataan...",
+						search:         "Haku",
+						lengthMenu:    	"Näytä _MENU_ kontaktia ",
+						info:           "Näytetään _START_ - _END_ / _TOTAL_ kontaktia",
+						infoEmpty:      "Näytetään 0 - 0 / 0 kontaktia",
+						infoFiltered:   "",
+						infoPostFix:    "",
+						loadingRecords: "Ladataan kontakteja...",
+						zeroRecords:    "Ei kontakteja",
+						emptyTable:     "Ei kontakteja",
+						paginate: {
+							first:      "Alkuun",
+							previous:   "Edellinen",
+							next:       "Seuraava",
+							last:       "Loppuun"
+						},
+						aria: {
+							sortAscending:  ": Järjestä nousevassa järjestyksessä",
+							sortDescending: ": Järjestä laskevassa järjestyksessä"
+						},
+						
+					},
+					"lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Kaikki"]],				
+				});	
+			});
+		
+			
+
+						
+		})
+		
+	

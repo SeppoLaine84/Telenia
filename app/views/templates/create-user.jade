@@ -1,0 +1,11 @@
+form.details.row: .col-xs-12
+	h4 Kirjautumistiedot
+	label(for='email') Sähköposti
+	input.form-control(type='email' name='email')
+	label(for='pwd') Salasana
+	input.form-control(type='password' name='pwd')
+	label(for='ulvl-select') Rooli
+	select(name='userlevel').form-control
+		each uls, index in userlevelStrings
+			if(index > 0)
+				option(name='ulvl' type="number" value='#{index}')= uls

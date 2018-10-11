@@ -1,0 +1,372 @@
+extends ../../layout
+
+block content
+	script( lang="javascript"  src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/xlsx.min.js")
+	
+	#page-wrapper.gray-bg
+		.row.wrapper.border-bottom.white-bg.page-heading
+			h1
+				i.fa.fa-spinner.fa-pulse.fa-fw.page-title-icon
+				span.page-title= loadingText
+						
+		.wrapper-content
+			.row
+				#main-content.col-xs-12.gray-bg.animated.bounceInRight
+					.ibox.campaign-creator
+						.ibox-title
+							h5 Uusi kampanja
+						
+						.ibox-content
+							.row: .col-xs-12
+								form#new-camp()
+									.col-sm-6
+										.form-group
+											label(for='nimi') KAMPANJAN NIMI
+											input.form-control#nimi(name="nimi" type="text")
+											hr
+										.form-group
+											label(for='startDate') KAMPANJAN ALOITUSPÄIVÄ
+											.campStartDate#startDate
+										.form-group
+											hr
+											label(for='customer') LIITÄ ASIAKKAASEEN
+											select.form-control.customerSelect(name='customerID')
+												option(value='nocustomer') Ei valittu
+												each customer in customers
+													option(value='#{customer._id}')= customer.nimi
+										.form-group
+											label(for='kampanjanHinta') KAMPANJAN HINTA €
+											input.form-control(name="kampanjanHinta" type="tel" value="0.00")
+										.form-group
+											label(for='provisio') PROVISIO €
+											input.form-control(name="provisio" type="tel" value="0.00")
+										
+										.form-group
+											.checkbox
+												input(type='checkbox' name='soitauudestaanOK')
+												label(for="soitauudestaanOK"): strong AKTIVOI MYYNTIEN UUDELLEEN SOITTO
+												
+									.col-sm-6
+										.form-group
+											label(for="desc") KAMPANJAN OHJEISTUS
+											textarea#desc.form-control(name="kuvaus" cols="40" rows="17")
+										.form-group
+											hr
+											a.btn-info.btn(style='margin-right:8px' asiakasrekisteri.xls href="/asiakasrekisteri.xls")
+												i.fa.fa-fw.fa-download
+												| Lataa malli asiakasrekisteristä
+											form(method="POST" action="/dev/null")
+												input#fileInput(type="file" style="display:none")
+											button#startUpload.btn-success.btn()
+												i.fa.fa-fw.fa-upload
+												| Lähetä asiakasrekisteri
+								.col-sm-12.uploader
+									hr
+									
+									h2.loading.animated.hidden 
+										span.pull-left KÄSITELLÄÄN TIEDOSTOA...
+									.row: .col-xs-12
+										div.progress-bar.progress-bar-success.hidden(style="margin-top:3px;width: 10%;height:20px;margin-bottom:10px" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" role="progressbar")
+											span.text-center 0% Valmis
+
+									
+									.table-responsive.animated.hidden: table.table.table-striped.table-bordered.table-hover#fileContents
+										thead
+											tr
+												th Poista
+										tbody
+									
+
+						.ibox-footer
+							button#saveCamp.btn.btn-success
+								i.fa.fa-fw.fa-save
+								| Tallenna kampanja
+block content-scripts
+	script.
+		var userlvl = #{user.userlevel};
+		$('.campStartDate').datetimepicker({
+			locale:"fi",
+			inline: true,
+			defaultDate:new Date(),
+			minDate:new Date(),
+			sideBySide: true,
+			icons : {
+					time: 		"fa fa-clock-o",
+					date: 		"fa fa-calendar",
+					up: 		"fa fa-arrow-up",
+					down: 		"fa fa-arrow-down",
+					next:		"fa fa-arrow-right", 
+					previous:	"fa fa-arrow-left", 
+					clock: 		"fa fa-clock",
+					close:		"fa fa-times",
+					
+			},	
+		});
+		
+		$(".callAgainDialog").on("dp.change", function (e) {
+			$(this).closest(".payload-datas").find(".kuittaus").removeClass("disabled");
+		});
+		
+		$("#startUpload").on("click", function(){
+			$("#fileInput").click();
+		});
+		
+		$("#new-camp").submit(function(e){
+			e.preventDefault();
+		});
+		
+		/*	XLS FILEN GENEROINTI/PARSE	*/
+		var alphabets 			= ("abcdefghijklmnopqrstuvwxyz").toUpperCase().split("");
+		var fileInput 			= document.getElementById('fileInput');
+		var $uploadedFileHead 	= $("#fileContents thead tr");
+		var $uploadedFileBody 	= $("#fileContents tbody");
+		var files;
+		var $plSize 			= $(".payloadSize");
+		var $pbar 				= $(".progress-bar");
+		var payloadSize			= 0;
+		var sheetJSON;
+		var fileData = {
+			keys: [],
+			dimensions: {
+				h:0,w:0,
+			},
+		};
+		 
+		var prog = 0;
+		
+		function processSheetItem(item, callback) {
+		
+			var rowNum 	= item['__rowNum__'];
+			
+			setTimeout(function(){
+				prog = 50 +  Math.ceil((rowNum / fileData.dimensions.h * 100) / 2);
+				$pbar.attr("width", prog+"%").css({width:prog+"%"}).find("span").text(prog+"% Valmis")
+			},0);
+			
+			for(var x = 0; x < fileData.dimensions.w; x++){
+				
+					if(alphabets[x] == "A"){
+						var $row 	= $("<tr class='hidden row-"+rowNum+"'></tr>");
+						var keyNum 	= 0;
+						$row.append($("<td data-cell='remove-row' class='text-center'><button class='btn btn-danger btn-xs times delete'>&times</button></td>"))
+						$row.find(".delete").on("click", function(){
+							
+							sheetJSON = _.without(sheetJSON, _.findWhere(sheetJSON, item));
+							
+							if(sheetJSON.length == 0)
+								$("#saveCamp").addClass("disabled");
+							$row.fadeOut('fast', function(){
+								$(this).remove();
+							});
+						});
+						
+						fileData.keys.forEach(function(key){
+						
+							$row.append($("<td data-cell='"+alphabets[keyNum]+""+rowNum+"'>"+(item[key.v] || "")+"</td>"))
+							keyNum++;
+						});
+						$uploadedFileBody.append($row);
+					
+					}
+				
+			}
+		
+			callback()
+			
+		}
+
+		function handleFile(e) {
+			files = e.target.files;
+			$pbar.removeClass("hidden");
+			
+			prog = 10;
+		
+			$pbar.attr("width", prog+"%").css({width:prog+"%"}).find("span").text("0% Valmis")
+			
+			$(".uploader .loading").removeClass("hidden").addClass("bounceInRight").one('animationend webkitAnimationEnd oAnimationEnd MSAnimationEnd webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend', function(e) {
+				
+				var i,f;
+				for (i = 0, f = files[i]; i != files.length; ++i) {
+					
+					var reader 	= new FileReader();
+					var name 	= f.name;
+					prog 		= 25; 
+					
+					$pbar.attr("width", prog+"%").css({width:prog+"%"}).find("span").text(prog+"% Valmis")
+					
+					
+					reader.onload = function(e) {
+						prog = 50; 
+						$pbar.attr("width", prog+"%").css({width:prog+"%"}).find("span").text(prog+"% Valmis")
+					
+						var data 			= e.target.result;
+						var workbook 		= XLSX.read(data, {type: 'binary', sheetStubs: true});
+						var sheet_name_list = workbook.SheetNames;
+						var lastCellNum 	= 1;
+						
+						$(".uploader .table-responsive").removeClass("hidden").addClass("bounceInRight");
+						$(".uploader .loading").text("LADATTU TIEDOSTO");
+						
+						if(sheet_name_list.length > 0){
+							var sheetName = sheet_name_list[0];
+														
+								if(sheetName){
+									
+									var worksheet 	= workbook.Sheets[sheetName];
+									sheetJSON		= XLSX.utils.sheet_to_json(worksheet);
+									
+									fileData.dimensions.w = worksheet['!range'].e.c;
+									fileData.dimensions.h = worksheet['!range'].e.r;	
+								
+									
+									for(var x = 0; x < fileData.dimensions.w; x++){
+										if(worksheet[alphabets[x]+"1"]){
+											fileData.keys.push(worksheet[alphabets[x]+"1"])
+											$uploadedFileHead.append($("<th class='col-"+alphabets[x]+"'>"+worksheet[alphabets[x]+"1"].v+"</th>"))
+										}
+									}
+									payloadSize = sheetJSON.length;
+									if(payloadSize > 0){					
+										async.map(sheetJSON, processSheetItem, function(err, results){
+											
+												$uploadedFileBody.find("tr.hidden").removeClass("hidden");
+												if(sheetJSON.length > 0){
+													
+													$("#saveCamp").addClass("file-ok");
+												}
+													
+												
+											   $('#fileContents').DataTable({
+												   "columnDefs": [ {
+														"targets": 0,
+														"orderable": false,
+														"searchable":false,
+													} ],
+													"order": [[ 1, "asc" ]],
+													dom: '<"html5buttons"B>lTfgitp',
+													buttons: [
+														
+													],
+													language: {
+														processing:     "Ladataan...",
+														search:         "Haku",
+														lengthMenu:    	"Näytä _MENU_ kontaktia ",
+														info:           "Näytetään _START_ - _END_ / _TOTAL_ kontaktia",
+														infoEmpty:      "Näytetään 0 - 0 / 0 kontaktia",
+														infoFiltered:   "",
+														infoPostFix:    "",
+														loadingRecords: "Ladataan kontakteja...",
+														zeroRecords:    "Ei kontakteja",
+														emptyTable:     "Ei kontakteja",
+														paginate: {
+															first:      "Alkuun",
+															previous:   "Edellinen",
+															next:       "Seuraava",
+															last:       "Loppuun"
+														},
+														aria: {
+															sortAscending:  ": Järjestä nousevassa järjestyksessä",
+															sortDescending: ": Järjestä laskevassa järjestyksessä"
+														},
+													
+													}
+
+												});
+												
+											
+										});
+								
+									}
+									else {
+										resetFileUpload()
+										toastr['error']("Tiedosto ei sisällä yhteystietoja", "Tiedoston lataus");
+									}
+								
+								}
+							
+							
+						}
+						else {
+							resetFileUpload()
+							toastr['error']("Tiedosto ei sisällä oikeanlaista dataa", "Tiedoston lataus");
+							
+						}
+						
+					};
+					reader.readAsBinaryString(f);
+				}
+			  });
+		}
+		
+		function resetFileUpload(){
+			
+			files = [];
+			$(".uploader .loading").addClass("hidden")
+			$(".uploader .table-responsive").addClass("hidden").removeClass("bounceInRight");
+
+			$pbar.addClass("hidden");
+			
+			prog = 10;
+		
+			$pbar.attr("width", prog+"%").css({width:prog+"%"}).find("span").text("0% Valmis")
+			
+		}
+		
+		$("#nimi").on("change input paste", function() {
+		
+			if($(this).val().length > 0){
+				$("#saveCamp").addClass("name-ok");
+			}
+			else {
+				$("#saveCamp").removeClass("name-ok");
+			}
+		});
+		
+		fileInput.addEventListener('change', handleFile, false);
+		
+		$("#saveCamp").on("click", function(){
+			var errors = false;
+			if($(".customerSelect").val() == "nocustomer"){
+				toastr['warning']("Ei asiakasta valittuna", "Virhe")
+				errors = true;
+			}
+			if($("input[name='nimi']").val().length == 0) {
+				toastr['warning']("Kampanjalla ei ole nimeä", "Virhe")
+				errors = true;
+			}
+			if(payloadSize == 0){
+				toastr['warning']("Kampanjassa ei ole soitettavia kohteita", "Virhe")
+				errors = true;
+			}
+			
+			if(errors == false) {
+				$(this).html("<i class='fa fa-pulse fa-spinner'></i> Ladataan...").addClass("disabled");
+				
+				if($(this).hasClass("file-ok") && $(this).hasClass("name-ok")){
+					var details = $("#new-camp").serializeArray().toJSONI();
+					
+					if(details['soitauudestaanOK']) {
+						if(details['soitauudestaanOK'] == "on")
+							details['soitauudestaanOK'] = true;
+						else
+							details['soitauudestaanOK'] = false;
+					}
+						
+					$.ajax({
+						url:		"/campaign/create",
+						type:		"POST",
+						dataType:	"JSON",
+						data:{
+							details:	details,
+							fileData:	fileData,
+							payload:	sheetJSON,
+						},
+						success:function(response){
+							document.location = "/aloitus";
+							
+						},
+					})
+					
+				}
+			}
+		});

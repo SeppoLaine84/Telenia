@@ -1,0 +1,77 @@
+extends layout
+block content
+	script (src="/js/plugins/jqueryEditableElement/jquery.jeditable.js")
+	script (src="/js/plugins/jqueryEditableElement/jquery.jeditable.inputs.js")
+	style.
+		#customerPageCreator label {
+			margin-top:0.5em !important;
+		}
+						
+	
+	#page-wrapper.gray-bg
+		.row.wrapper.border-bottom.white-bg.page-heading
+			h1
+				i.fa.fa-spinner.fa-pulse.fa-fw.page-title-icon
+				span.page-title= loadingText
+						
+		.wrapper-content#customerPageCreator
+			.row
+				#main-content.col-xs-12.gray-bg
+					.row
+						.col-xs-12.col-md-12.col-lg-4.animated.bounceInLeft
+							.m-t-lg
+								form#newCustomerPage.form
+									.tabs-container
+										.tabs-left
+											ul.nav.nav-tabs
+												li.active: a(data-toggle="tab" href="#basicInfo") Sivun perustiedot
+												li: a(data-toggle="tab" href="#theme") Sivun värit
+											.tab-content			
+												#basicInfo.tab-pane.active
+													.panel-body
+														.form-group
+															.col-xs-12.col-md-12.col-lg-3
+																label.text-right.control-label(for="ylaotsikko") Yläotsikko
+															.col-xs-12.col-md-9
+																input.form-control.edit(name="ylaotsikko" type='text' placeholder="Yläotsikko" value="Yläotsikko") 
+												#theme.tab-pane
+													.panel-body
+														.form-group
+															label.col-xs-12.col-md-3.text-right.control-label(for="taustavari") Taustaväri
+															.col-xs-12.col-md-9
+																input.form-control.edit(name="taustavari"  type="color") 
+																			
+						#previewView.col-xs-12.col-md-12.col-lg-8.animated.bounceInRight
+							.m-t-lg
+								.ibox
+									.ibox-title
+										h3
+											i.fa.fa-fw.fa-edit
+											| Esikatselu ja muokkaus
+									.ibox-content
+										.container-fluid
+											.row
+												.col-xs-12
+													h1.ylaotsikko.editor Yläotsikko
+						
+											
+block content-scripts
+	script.
+		
+		 $('.editor').editable(updateCampaign(), {
+			type:"text",
+			indicator : 'Tallennetaan...',
+			tooltip   : 'Muuta tietoa',
+			submit:		'Hyväksy',
+			type:'text', 
+			cssclass : 'editor', 
+			style   : '',
+		 });
+		 
+		 function updateCampaign(e){
+			 console.log(e)
+			 console.log("updating campaign");
+			 //'/campaign/offsite/update'
+			 
+		 }
+	

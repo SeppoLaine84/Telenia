@@ -1,0 +1,63 @@
+nav.navbar-default.navbar-static-side(role='navigation')
+  .sidebar-collapse
+    ul#side-menu.nav.metismenu
+      li.nav-header
+        .dropdown.profile-element
+          img.header-logo(alt='#{appSettings.name}', src='/images/logo.png')
+          a.dropdown-toggle(data-toggle='dropdown', href='#')
+            span.clear
+              span.block.m-t-xs
+                strong.font-bold ADMIN
+                span.text-muted.text-xs.block Codalia
+        .logo-element
+          img(alt='#{appSettings.name}', src='/images/logo_pieni.png')
+      li
+        a(href='/admin/')
+          i.fa.fa-home
+          span.nav-label Etusivu
+      li#menuUserList
+        a(href='/user')
+          i.fa.fa-user
+          span.nav-label Käyttäjät
+          span.label.label-primary.pull-right.user-count
+            span.count 0
+        ul.nav.nav-second-level.collapse
+            li: a.nav-label(href="/user/luo")
+              i.fa.fa-plus.fa-fw
+              | Luo uusi käyttäjä
+      li
+        a(href='/clients')
+          i.fa.fa-diamond
+          span.nav-label Asiakkaat
+          span.label.label-primary.pull-right.client-count 0
+        ul.nav.nav-second-level.collapse#menuClientList
+          li: a.nav-label(href="/clients/luo")
+            i.fa.fa-user-plus.fa-fw
+            | Luo uusi asiakas
+      li#userlista-menuitem
+          a(href='/user/edit/#{user._id}')
+            i.fa.fa-user
+            span.nav-label Omat tiedot
+      li
+        a(href='/admin/errorCenter')
+          i.fa.fa-bug
+          span.nav-label VirheKeskus
+      li
+        a(href='/admin/slowPages')
+          i.fa.fa-bolt( aria-hidden="true")
+          span.nav-label Hitaat sivut
+      li
+        a(href='/admin/email')
+          i.fa.fa-envelope-o
+          span.nav-label Sähköpostit
+      li
+        a(href='/user/logout')
+          i.fa.fa-power-off
+          span.nav-label Kirjaudu ulos
+      hr
+      #msg-center
+        h3 Viestikeskus
+        ul#msg-container
+          .notifys
+a.navbar-minimalize.minimalize-styl-2.btn.btn-primary(href='#')
+  i.fa.fa-bars

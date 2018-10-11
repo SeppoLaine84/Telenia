@@ -1,0 +1,81 @@
+#companys.tree
+	li
+		button.expand(role="button" data-toggle="collapse" data-target="#client-content" aria-expanded="false"): span
+		h1 Yritykset (#{clients.length})
+		#client-content.content.collapse
+			button.btn.green(role="button" data-toggle="collapse" data-target="#create-client-content" aria-expanded="false")
+				i.fa-fw.fa.fa-plus
+				| Lisää uusi yritys
+			#create-client-content.content.collapse
+				ul.list-unstyled
+					include createCompany
+			hr/
+			ul.users.list-unstyled
+				for company in clients
+					include company
+			hr/
+script.
+	$("#create-user").off("click").on("click", function(){
+		$.get("/template/create-user", function(data){
+			openConfirmDialog("Luo käyttäjä", data, function(_modal){
+		
+				var form 		= $(_modal.element).find("form.details").serializeArray();
+				var formData 	= $(form).serializeArray();
+				console.log($(form));
+				console.log(formData);
+				/*
+				$.ajax({
+					url:		"/user/create",
+					type:		"POST",
+					dataType:	"JSON",
+					data:		formData,
+					success:function(resp){
+						console.log(resp);
+					},
+				});
+				*/
+								
+			});
+		})
+	});
+	
+	$(".remove-company").off("click").on("click", function(e){
+		
+		var _self 	= this;
+		var name 	= $(this).closest(".company").find("#cname").text();
+		var id		= $(this).data("id");
+		if(id)
+		openConfirmDialog("Yrityksen poisto", "<i class='fa fa-warning pull-left fa-3x'></i><h4>Poistetaanko yritys \"<strong>"+name+"</strong>\" varmasti?<br/><br/><small>Et voi myöhemmin peruuttaa toimintoa.</small></h4>", function(){
+			
+			$.ajax({
+				url:"/client/remove",
+				type:"POST",
+				dataType:"json",
+				data: {
+					id: id,
+					nimi: name,
+				}
+			});
+			
+			$(_self).closest(".company").slideUp(function(){
+				$(this).remove();
+			});
+		});
+		
+	});
+	
+	$("#create-company").off("submit").on("submit", function(e){
+	
+		e.preventDefault();
+		$(this).ajaxSubmit(function(resp){
+			
+			if(resp){
+				if(resp.error){
+					toastr.error(resp.error, "Virhe!");
+				}
+				else 
+					toastr.success("Yritys luotu onnistuneesti.");
+			}
+			
+		});
+	});

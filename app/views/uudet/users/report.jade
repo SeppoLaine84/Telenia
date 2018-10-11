@@ -1,0 +1,53 @@
+#kuittaus-template.hidden
+	h3#kuittaus-date
+	table.kuittaus.table.table-striped.table-hover
+		thead
+			tr(style=' ;border:0')
+				th(style=' ;border:0') Kampanjan nimi
+				th(style=' ;border:0') OK
+				th(style=' ;border:0') EI
+				th(style=' ;border:0') EV
+				th(style=' ;border:0') SU
+				th(style=' ;border:0') TJ
+				th(style=' ;border:0') V
+				th.text-center(style=' ;border:0') Tunnit 
+				th.text-center(style=' ;border:0' colspan="2") Palkkio 
+			tr(style=' ;border:0')
+				td(style=' ;border:0')
+				td(style=' ;border:0')
+				td(style=' ;border:0')
+				td(style=' ;border:0')
+				td(style=' ;border:0')
+				td(style=' ;border:0')
+				td(style=' ;border:0')
+				td(style=' ;border:0')
+				if(user.palkka.palkkaTyyppi == 1)
+					td(style=' ;border:0').text-center Tunti (#{user.palkka.tuntipalkka.replace("\,", ".")}€)
+				else
+					td(style=' ;border:0').text-center Tunti (kk-palkka)
+				td(style=' ;border:0').text-center Provisio €
+		tbody
+			tr.row-template.hidden.kuittaus-row
+				td.campaign-name
+				td.ok.statuss(data-status="ok") 0
+				td.ei.statuss(data-status="ei") 0
+				td.ev.statuss(data-status="ev") 0
+				td.su.statuss(data-status="su") 0
+				td.tj.statuss(data-status="tj") 0
+				td.v.statuss(data-status="v") 0
+				td.text-center
+					input.text-center.editable.tunnit.template(type="tel" value="TÄYTÄ" style="width:4em" )
+				td.text-center.money-hour
+				td.text-center.money-prov
+			tr.total-row.success
+				td: strong(style='color:black') YHTEENSÄ
+				td.ok-total 0
+				td.ei-total 0
+				td.ev-total 0
+				td.su-total 0
+				td.tj-total 0 
+				td.v-total 0
+				td.tunnit-total.text-center 0.00
+				td.text-center.money-hour-total 0.00€
+				td.text-center.money-prov-total 0.00€
+	hr

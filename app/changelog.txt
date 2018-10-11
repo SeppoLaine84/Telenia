@@ -1,0 +1,44 @@
+.------------.
+| CHANGELOGI |
+'------------'
+	 |  |
+	 |  |
+--------------
+
+27.6.16
+	- client-sessions poistettu käytöstä ja vaihdettu express-sessioniin
+	- Socketti liitetty sessioniin
+	- Raportti generoi nyt oikeat päivät kuittauksille
+
+28.6.16
+	- Raportointia tehty luotettavammaksi
+	- Raportointiin parempi käyttäjä filtteröinti haulla
+	- Käyttäjä-sivulle lisätty aktiiviset kampanjat
+	- Päivittäinen myyntiraportti valmis (Tee parempi email template)
+	- Uloskirjautuessa kysytään halutaanko tehdä raportti
+	- Soittolistan statukset päivittyy nyt automaattisesti
+	
+	Uudet tarvittavat paketit
+		npm install express-sessions
+		npm install express-socket.io-session
+		npm install connect-mongo
+
+
+***PÄIVITETTY 28.6.16***
+		
+29.6.16
+	
+	- SuperAdmin log streami tehty uusiksi infinity scroll tyyliin
+	- Lähetetään admineille emailia jos ohjelmassa on virhettä
+	- Emailihin lisätty toimivat CSS
+	- Admin sivulle prosessista tarkempia tietoja
+	
+	Uudet tarvittavat paketit
+		npm install mongoose-paginate
+		npm install response-time
+		
+***PÄIVITETTY 30.6.16***
+
+30.6.16
+	- Errorin logista paranneltu
+		

@@ -1,0 +1,59 @@
+li#report-day
+	table.table.table-striped.table-hover.template(style='display:none')
+		thead
+			td.campaign-nimi Nimi
+			td OK
+			td EV
+			td SU
+			td EI
+			td TJ
+			td V
+			td Kontaktit<br/>yhteensä
+			td Tunnit
+			td Provisio
+			td Tuntipalkka
+			td € yhteensä
+		tbody.template
+			tr.table-row.template
+				td.pvm
+				td.status-ok.calculate 0
+				td.status-ev.calculate 0
+				td.status-su.calculate 0
+				td.status-ei.calculate 0
+				td.status-tj.calculate 0
+				td.status-v.calculate 0
+				td.calls.calculate 0
+				td.hours.calculate 0
+				td.provisio.calculate 0
+				td.palkka_hourly.calculate 0
+				td.money.calculate 0
+					
+		tbody.body-content
+		tbody.body-total.saldo
+			tr
+				td: strong YHTEENSÄ
+				td.status-ok.value 0
+				td.status-ev.value 0
+				td.status-su.value 0
+				td.status-ei.value 0
+				td.status-tj.value 0
+				td.status-v.value 0
+				td.calls.value 0
+				td.hours.value 0
+				td.provisio.value 0
+				td.palkka_hourly.value 0
+				td.money.value 0
+		tbody.body-power.saldo
+			tr
+				td: strong TEHO
+				td.status-ok 0
+				td.status-ev 0
+				td.status-su 0
+				td.status-ei 0
+				td.status-tj 0
+				td.status-v 0
+				td.calls 0
+				td.hours 0
+				td.provisio 0
+				td.palkka_hourly 0
+				td.money 0

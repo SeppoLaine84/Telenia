@@ -1,0 +1,31 @@
+doctype html(lang='fi')
+head
+	title Telenia.fi - Yhteydenottopyyntö
+	meta(charset='utf-8')
+	meta(name='viewport', content='width=device-width,initial-scale=1')
+	style
+		include email.css
+body
+	.container
+		h4 #{data.titteli} #{data.nimi} otti yhteyttä yrityksestä #{data.ynimi}
+		p: strong= moment(data.timestamp).locale("fi").format("DD.MM.YYYY HH:mm")
+		table
+			tbody
+				tr
+					td Sähköposti
+					td= data.sposti
+				tr
+					td Puhelinnumero
+					td= data.puh
+				tr
+					td Y-Tunnus
+					td= data.ytunnus
+				tr
+					td Katuosoite
+					td= data.katuos
+				tr
+					td Postinumero
+					td= data.postinum
+				tr
+					td Postitoimipaikka
+					td= data.paikka

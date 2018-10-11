@@ -1,0 +1,721 @@
+extends ../../layout
+block content
+
+	#page-wrapper.gray-bg
+		.row.wrapper.border-bottom.white-bg.page-heading
+			h1
+				i.fa.fa-spinner.fa-pulse.fa-fw.page-title-icon
+				span.page-title= loadingText
+				
+		.wrapper-content
+			.row
+				#main-content.col-xs-12.gray-bg.animated.fadeInRight
+					.ibox.campaign-editor
+						.ibox-title
+							h5= campaign.nimi
+						
+						.ibox-content
+							.row: .col-xs-12
+								form#edit-camp.campaign(data-id="#{campaign._id}")
+									legend PERUSTIEDOT
+									.col-sm-6
+										.form-group
+											label(for='nimi') KAMPANJAN NIMI
+											input.form-control#nimi(name="nimi" type="text" value="#{campaign.nimi}")
+											hr
+										.form-group
+											label(for='startDate') KAMPANJAN ALOITUSPÄIVÄ
+											.campStartDate#startDate
+										.form-group
+											label(for="kesto") VIIMEINEN SOITA UUDESTAAN AIKA
+											select.form-control.dbConn(name='kesto' data-target='campaign')
+												option(value='1 y' selected) Rajaton
+												option(value='1 w') Viikko
+												option(value='2 w') 2 viikkoa
+												option(value='1 M') Kuukausi
+												
+												
+										.form-group
+											
+											label(for='customer') LIITÄ ASIAKKAASEEN
+											select.form-control.customerSelect(name='customerID')
+												each customer in customers
+													if(campaign.customerID)
+														if(customer._id.toString() == campaign.customerID.toString())
+															option(value='#{customer._id}' selected="selected")= customer.nimi
+														else
+															option(value='#{customer._id}')= customer.nimi
+													else
+														option(value='#{customer._id}')= customer.nimi
+										.form-group
+											label(for='provisio') PROVISIO €
+											if(campaign.provisio)
+												input.form-control(name="provisio" type="tel" value="#{campaign.provisio}")
+											else
+												input.form-control(name="provisio" type="tel" value="0.00")
+									.col-sm-6
+										.form-group
+											label(for="desc") KAMPANJAN OHJEISTUS
+											textarea#desc.form-control(name="kuvaus" cols="40" rows="17")= campaign.kuvaus
+										.form-group
+											hr
+											a.btn-info.btn(style='margin-right:8px' asiakasrekisteri.xls href="/asiakasrekisteri.xls")
+												i.fa.fa-fw.fa-download
+												| Lataa malli asiakasrekisteristä
+											form(method="POST" action="/dev/null")
+												input#fileInput(type="file" style="display:none")
+											button#startUpload.btn-success.btn(role="button" type="button")
+												i.fa.fa-fw.fa-upload
+												| Lähetä lisä-asiakasrekisteri
+										.form-group
+											a#createCustomerPage.btn.btn-success(href="/campaign/offsite/creator/#{campaign._id}")
+												i.fa.fa-fw.fa-file-text-o
+												| Luo sivu asiakkaalle
+									legend EDISTYMISEN SEURANTA / TÖIDEN JAKAMINEN
+									.col-sm-12
+										.row(style='margin-bottom:15px'): .col-xs-12: .form-inline
+											.form-group
+												
+												.input-group(style='margin-right:6px')
+													select.form-control#userSelect(name='userSelect')
+														each user in users
+															option(value="#{user._id}")= user.yhteystiedot.nimi.etu + " " +user.yhteystiedot.nimi.suku
+													span.input-group-btn
+														button.btn.btn-primary.attach-user
+															i.fa.fa-fw.fa-plus
+															| Liitä
+												button#remAttachs.btn.btn-danger
+													i.fa.fa-fw.fa-times
+													| Poista liitokset valinnoista
+										.row(style='margin-bottom:15px')
+											.col-xs-12
+												h2
+													small.pull-left
+														span(style='margin-right:6px;') Valittu 
+															strong.selectedCount 0
+															|  työtä
+														.clearfix(style='margin-bottom:6px')
+														button.clearSelected.btn.btn-info.btn-xs
+															i.fa.fa-fw.fa-ban
+															| Poista kaikki valinnat
+													small.pull-left
+														include ../widgets/status-selector
+													small.pull-left
+														include ../widgets/share-filter
+														
+														
+												
+														
+										.table-responsive: table#payloads.table.table-striped.table-hover
+											thead
+												tr#labels
+													th: input.selectAll.icheckbox_square-green(type="checkbox")
+													th Yrityksen nimi
+													th Käyttäjäliitos
+													th.text-center Status
+													th.text-center Poista
+											each payload in payloads
+												tr(data-id='#{payload._id}' data-status='#{payload.status}')
+													td: input.select.icheckbox_square-green(type="checkbox" )
+													if(payload.payload[0])
+														td= payload.payload[0].value
+													else
+														td
+													if(payload.users)
+														if(payload.users.nimi)
+															td.attachedUser(data-id='#{payload.users.id}')= payload.users.nimi
+														else
+															td.attachedUser.text-danger(data-id='-'): strong Jakamaton työ
+													else
+														td.attachedUser.text-danger(data-id='-'): strong Jakamaton työ
+													td.text-center= payload.status
+													td.text-center
+														button.btn.btn-xs.btn-danger.remPayload(data-id="#{payload._id}")
+															i.fa.fa-times
+								.col-sm-12.uploader
+									hr
+									h2.loading.animated.hidden 
+										span.pull-left KÄSITELLÄÄN TIEDOSTOA...
+									.row: .col-xs-12
+										div.progress-bar.progress-bar-success.hidden(style="margin-top:3px;width: 10%;height:20px;margin-bottom:10px" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" role="progressbar")
+											span.text-center 0% Valmis
+
+									
+									.table-responsive.animated.hidden: table.table.table-striped.table-bordered.table-hover#fileContents
+										thead
+											tr
+												th Poista
+										tbody
+									
+
+						.ibox-footer
+							.row: .col-xs-12: .col-xs-12
+								button#saveCamp.btn.btn-success.pull-left(style='margin-right:18px')
+									i.fa.fa-fw.fa-save
+									| Tallenna muutokset
+								button#download-camp.btn.btn-info.pull-left(style='margin-right:18px' href='/campaign/export/xls/#{campaign._id}.xlsx' )
+									i.fa.fa-download.fa-fw
+									span.title Lataa rekisteri
+								if(campaign.active == true)
+									button#activateCamp.btn.btn-warning.pull-left(data-id="#{campaign._id}" data-status="true")
+										i.fa.fa-fw.fa-pause
+										span Aseta passiiviseksi
+								else
+									button#activateCamp.btn.btn-info.pull-left(data-id="#{campaign._id}" data-status="false")
+										i.fa.fa-fw.fa-play
+										span Aseta aktiiviseksi
+								
+								button#delCamp.btn.btn-danger.pull-right(data-id="#{campaign._id}")
+									i.fa.fa-fw.fa-trash
+									span Poista kampanja
+block content-scripts
+	script(src="https://cdn.datatables.net/buttons/1.1.2/js/dataTables.buttons.min.js")
+	script( lang="javascript"  src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.0/xlsx.min.js")
+	link(href="https://cdn.datatables.net/buttons/1.1.2/css/buttons.dataTables.min.css" ref="stylesheet")
+	script.
+		
+		var campaignInfo 		= !{JSON.stringify(campaign)};
+		var userInfo 			= !{JSON.stringify(user)};
+		var alphabets 			= ("abcdefghijklmnopqrstuvwxyz").toUpperCase().split("");
+		var fileInput 			= document.getElementById('fileInput');
+		var $uploadedFileHead 	= $("#fileContents thead tr");
+		var $uploadedFileBody 	= $("#fileContents tbody");
+		var files;
+		var $plSize 			= $(".payloadSize");
+		var $pbar 				= $(".progress-bar");
+		var payloadSize			= 0;
+		var sheetJSON;
+		var fileData = {
+			keys: [],
+			dimensions: {
+				h:0,w:0,
+			},
+		};
+		var selectedDate 	= null;
+		var prog 			= 0;
+
+		
+	
+		var picker = $('.campStartDate').datetimepicker({
+			locale:"fi",
+			inline: true,
+			defaultDate:campaignInfo.alkaa,
+			minDate:campaignInfo.alkaa,
+			sideBySide: true,
+			icons : {
+					time: 		"fa fa-clock-o",
+					date: 		"fa fa-calendar",
+					up: 		"fa fa-arrow-up",
+					down: 		"fa fa-arrow-down",
+					next:		"fa fa-arrow-right", 
+					previous:	"fa fa-arrow-left", 
+					clock: 		"fa fa-clock",
+					close:		"fa fa-times",
+					
+			},	
+		});
+		
+		picker.on("dp.change", function(dt){
+			selectedDate = dt.date._d		
+			campaignInfo['alkaa'] = dt.date._d;			
+		});
+
+		var table = $('#payloads').DataTable({
+		   "columnDefs": [ {
+				"targets": 0,
+				"orderable": false,
+				"searchable":false,
+			} ],
+			"order": [[ 1, "asc" ]],
+			dom: '<"html5buttons"B>lTfgitp',
+			
+			buttons: [],
+			language: {
+				processing:     "Ladataan...",
+				search:         "Haku",
+				lengthMenu:    	"Näytä _MENU_ kontaktia ",
+				info:           "Näytetään _START_ - _END_ / _TOTAL_ kontaktia",
+				infoEmpty:      "Näytetään 0 - 0 / 0 kontaktia",
+				infoFiltered:   "",
+				infoPostFix:    "",
+				loadingRecords: "Ladataan kontakteja...",
+				zeroRecords:    "Ei kontakteja",
+				emptyTable:     "Ei kontakteja",
+				paginate: {
+					first:      "Alkuun",
+					previous:   "Edellinen",
+					next:       "Seuraava",
+					last:       "Loppuun"
+				},
+				
+				aria: {
+					sortAscending:  ": Järjestä nousevassa järjestyksessä",
+					sortDescending: ": Järjestä laskevassa järjestyksessä"
+				}
+			},
+			"lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Kaikki"]],
+
+		});
+		
+		table.on( 'draw', function () {
+			$(".selectAll").prop("checked", false);
+		});
+			
+		var $us = $("#filterUser");	
+		var uniqUsers =_.uniq(_.map(table.cells(".attachedUser").nodes().to$(), function(item) { 
+			return {name:$(item).text(),id: $(item).data("id")};
+		}), function(itm){
+			return itm.id;
+		});
+		uniqUsers = _.sortBy(uniqUsers, function(u){
+			return u.id;
+		});
+		
+		uniqUsers.forEach(function(usr){
+			$us.append($("<option value='"+usr.id+"'>"+usr.name+"</option>"))
+		});
+		
+		
+		var userFiltered = {name:"", id:""};
+		$us.on("change", function(){
+			
+			userFiltered.name 	= $(this).find("option:selected").text();
+			userFiltered.id		= $(this).val();
+				
+			switch(userFiltered.name){
+				case 'Kaikki':
+					console.log("all selected")
+					table.column(2).search($.trim(userFiltered.id)).draw();
+				break;
+				
+				default:
+					table.column(2).search(userFiltered.name).draw();
+				break;
+				
+			}
+			clearSelected();
+		});
+				
+		
+		$(".selectAll").on("click", function(){
+			var checked = $(this).prop("checked");
+			$(this).closest("table").find("tbody input.select").prop("checked",checked ).closest("tr").toggleClass("selected", checked);
+			$(".selectedCount").text(table.rows('.selected').data().length );
+		});
+		
+		$(".clearSelected").on("click", function(){
+			clearSelected();
+		});
+		
+		function clearSelected() {
+			table.rows( '.selected' ).nodes().to$().removeClass( 'selected' ).find("input.select").prop("checked", false);
+			$(".selectAll").prop("checked", false);
+			$(".selectedCount").text(0);
+		}
+		
+	
+		$("body").on("change", "input.select", function(e){
+			var checked = $(this).find("input.select").prop("checked");
+			$(this).closest("tr").toggleClass("selected", checked);
+			$(".selectedCount").text(table.rows('.selected').data().length );
+		});
+		
+		
+		$(".attach-user").on("click", function(){
+			
+			var rows 		= table.rows('.selected');
+			var selectedIDS = rows.nodes().to$();
+			
+			if(selectedIDS.length > 0){
+				var datas 		= [];
+				var $userElem	= $(this).closest(".form-group").find("#userSelect");
+				var userID 		= $userElem.val();
+				var userName 	= $userElem.find("option:selected").text();
+				
+				for(var i = 0; i < selectedIDS.length; i++){
+					
+					if(_.contains(["ES", "EV", "SU"], $(selectedIDS[i]).data("status")) == true){
+						
+						table.cell($(selectedIDS[i]).find(".attachedUser")[0]).data(userName)
+						datas.push($(selectedIDS[i]).data("id"));
+						$(selectedIDS[i]).find(".attachedUser").removeClass("text-danger").text(userName);
+					}
+				}
+							
+				attachUserToCampaign(campaignInfo._id, userID, datas, userName, function(status){
+					//table.ajax.reload();
+					
+					if(status.totalCalls > 0)
+						toastr['info']("Käyttäjälle <strong>"+userName+"</strong> on liitetty <strong>"+status.totalCalls+"</strong> työtä.", "Työnjako");	
+					else
+						toastr['info']("Ei jaettavia soittoja.", "Työnjako");	
+				});
+				
+			}
+			else {
+				toastr['info']("Valitse liitettävät työt", "Vihje");
+			}
+			
+		});
+		
+		function attachUserToCampaign(kampanjaID, userID, ids, nimi, cb) {
+			clearSelected();
+			var data = {kampanjaID:kampanjaID, userID:userID, ids:JSON.stringify(ids), nimi:nimi,removeShare: false,};
+			$.ajax({
+				type:"POST",
+				url:"/campaign/attachUser",
+				dataType:"json",
+				data:data,
+				timeout: 60000,
+				success:function(status){
+					if(status.totalCalls > 0)
+						updateCalllistMenu();
+					if(cb)cb(status);
+						
+					//IOclient.emit("req.user.attach", {data:data, status:status, sender:userInfo})
+				},
+			});
+			
+		}
+		
+		$(".remPayload").on("click", function(){
+			var $row = $(this).closest("tr");
+			var plID = $row.data("id");
+			
+			$.ajax({
+				url:		"/campaignItem/del",
+				type:		"POST",
+				dataType:	"JSON",
+				data: {
+					_id: plID,
+				},success: function(){
+					$row.fadeOut(function(){
+						var row = table.row( $(this) );
+						var rowNode = row.node();
+						row.remove();
+						table.draw()
+					});
+				},
+			})
+		});
+		
+		
+		$("#remAttachs").on("click", function(){
+			if(table.rows('.selected').data().length > 0){
+				var rows 		= table.rows('.selected');
+				var selectedIDS = rows.nodes().to$();
+			
+				if(selectedIDS.length > 0){
+					var datas 		= [];
+					
+					for(var i = 0; i < selectedIDS.length; i++){
+						
+						if(_.contains(["ES", "EV", "SU"], $(selectedIDS[i]).data("status")) == true){
+						
+							datas.push($(selectedIDS[i]).data("id"));
+							
+						}
+					}
+				}
+				clearSelected();
+				$.ajax({
+					url:		"/campaign/attach",
+					type:		"POST",
+					dataType: 	"JSON",
+					data: {
+						kampanjaID:	campaignInfo._id,
+						userID:		"",
+						ids:		JSON.stringify(datas),
+						nimi:		"",
+						removeShare: true,
+					},
+					success: function(resp) {
+						
+						$(selectedIDS).find(".attachedUser").addClass("text-danger").html("<strong>Jakamaton työ</strong>");
+						updateCalllistMenu();
+
+					},
+					
+				})
+			}
+		});
+		
+		
+		
+		$("#status-selector .item-count button").on("click", function(){
+			var filterT = $.trim($(this).text());
+		
+			if(filterT != "KAIKKI"){
+			
+				table.column(3).search("^" + filterT + "$", true, false, true).draw()
+			}
+			else {
+				table.column(3).search("").draw();
+			}
+		});
+		
+	
+		
+		$("#activateCamp").on("click", function(){
+			$(this).toggleClass("btn-info btn-warning");
+			var act = $(this).data("status");
+			act 	= !act;
+			$(this).data("status", act);
+			var $icon = $(this).find(".fa").toggleClass("fa-play fa-pause");
+			if(act === false)
+				$(this).find("span").text("Aseta aktiiviseksi")
+			else 
+				$(this).find("span").text("Aseta passiiviseksi")
+			
+			var dat = {
+				target:"active",
+				value:act,
+				id:campaignInfo._id
+			}
+			
+			IOclient.emit("req.campaign.active", dat)
+			
+			$.ajax({
+				url:		"/campaign/set",
+				dataType:	"JSON",
+				type:		"POST",
+				data: dat,
+				success:function(r){
+					
+					//$("#menu-campaign-"+dat.id+".camp-edit-link").toggleClass("status-active status-inactive");
+					activeCampaignItem(dat);
+				},
+			})
+		});
+		
+		$("#saveCamp").on("click", function(){
+			
+			var savePhases = 2;
+			$(this).html("<i class='fa fa-pulse fa-spinner'></i> Ladataan...").addClass("disabled");
+			var campData 	= $("#edit-camp").serializeArray();
+			var dat 		= {};
+			
+			campaignInfo['oldName'] = campaignInfo.nimi;
+			campData.forEach(function(d){
+				campaignInfo[d.name] = d.value;
+			});
+			
+						
+			$.ajax({
+				url:		"/campaign/updateInfo",
+				dataType:	"JSON",
+				type:		"POST",
+				data: campaignInfo,
+				success:function(resp){
+						savePhases--;
+					
+						if(savePhases == 0){
+							location.reload();
+						}
+				}
+			})
+						
+			if($(this).hasClass("file-ok")){
+				
+			
+				$.ajax({
+					url:		"/campaign/appendItems",
+					type:		"POST",
+					dataType:	"JSON",
+					data:{
+						kampanjaID:	campaignInfo._id,
+						fileData:	fileData,
+						payload:	sheetJSON,
+						
+					},
+					success:function(response){
+						savePhases--;
+						if(savePhases == 0){
+							location.reload();
+						}
+						
+					},
+				})
+			}
+			else {
+				savePhases--;
+			}
+			
+		});
+			
+
+		/*
+		
+			XLS FILEN GENEROINTI/PARSE
+		
+		*/
+		
+		$("#startUpload").on("click", function(){
+			$("#fileInput").click();
+			$(window).scrollTo($(".uploader"), 300, function(){});
+		});
+		
+	
+	
+		
+		function processSheetItem(item, callback) {
+		
+			var rowNum 	= item['__rowNum__'];
+			
+			setTimeout(function(){
+				prog = 50 +  Math.ceil((rowNum / fileData.dimensions.h * 100) / 2);
+				$pbar.attr("width", prog+"%").css({width:prog+"%"}).find("span").text(prog+"% Valmis")
+			},0);
+			
+			for(var x = 0; x < fileData.dimensions.w; x++){
+				
+					if(alphabets[x] == "A"){
+						var $row 	= $("<tr class='hidden row-"+rowNum+"'></tr>");
+						var keyNum 	= 0;
+						$row.append($("<td data-cell='remove-row' class='text-center'><button class='btn btn-danger btn-xs times delete'>&times</button></td>"))
+						$row.find(".delete").on("click", function(){
+							
+							sheetJSON = _.without(sheetJSON, _.findWhere(sheetJSON, item));
+							
+							if(sheetJSON.length == 0)
+								$("#saveCamp").addClass("disabled");
+							$row.fadeOut('fast', function(){
+								$(this).remove();
+							});
+						});
+						
+						fileData.keys.forEach(function(key){
+						
+							$row.append($("<td data-cell='"+alphabets[keyNum]+""+rowNum+"'>"+(item[key.v] || "")+"</td>"))
+							keyNum++;
+						});
+						$uploadedFileBody.append($row);
+					
+					}
+				
+			}
+		
+			callback()
+			
+		}
+
+		function handleFile(e) {
+			files = e.target.files;
+			$pbar.removeClass("hidden");
+			
+			prog = 10;
+		
+			$pbar.attr("width", prog+"%").css({width:prog+"%"}).find("span").text("0% Valmis")
+			
+			$(".uploader .loading").removeClass("hidden").addClass("bounceInRight").one('animationend webkitAnimationEnd oAnimationEnd MSAnimationEnd webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend', function(e) {
+				
+				var i,f;
+				for (i = 0, f = files[i]; i != files.length; ++i) {
+					
+					var reader 	= new FileReader();
+					var name 	= f.name;
+					prog 		= 25; 
+					
+					$pbar.attr("width", prog+"%").css({width:prog+"%"}).find("span").text(prog+"% Valmis")
+					
+					
+					reader.onload = function(e) {
+						prog = 50; 
+						$pbar.attr("width", prog+"%").css({width:prog+"%"}).find("span").text(prog+"% Valmis")
+					
+						var data 			= e.target.result;
+						var workbook 		= XLSX.read(data, {type: 'binary', sheetStubs: true});
+						var sheet_name_list = workbook.SheetNames;
+						var lastCellNum 	= 1;
+						
+						$(".uploader .table-responsive").removeClass("hidden").addClass("bounceInRight");
+						$(".uploader .loading").text("LADATTU TIEDOSTO");
+						
+						
+								
+						sheet_name_list.forEach(function(sheetName) { 
+							var worksheet 	= workbook.Sheets[sheetName];
+							sheetJSON		= XLSX.utils.sheet_to_json(worksheet);
+							
+							fileData.dimensions.w = worksheet['!range'].e.c;
+							fileData.dimensions.h = worksheet['!range'].e.r;	
+						
+							
+							for(var x = 0; x < fileData.dimensions.w; x++){
+								fileData.keys.push(worksheet[alphabets[x]+"1"])
+								$uploadedFileHead.append($("<th class='col-"+alphabets[x]+"'>"+worksheet[alphabets[x]+"1"].v+"</th>"))
+							}
+							payloadSize = sheetJSON.length;
+													
+							async.map(sheetJSON, processSheetItem, function(err, results){
+								
+								$uploadedFileBody.find("tr.hidden").removeClass("hidden");
+								if(sheetJSON.length > 0){
+									
+									$("#saveCamp").addClass("file-ok");
+								}
+									
+								
+								$('#fileContents').on("init.dt", function(){
+									$(window).scrollTo($(this), 300);
+								}).DataTable({
+								   "columnDefs": [ {
+										"targets": 0,
+										"orderable": false,
+										"searchable":false,
+									} ],
+									"order": [[ 1, "asc" ]],
+									dom: '<"html5buttons"B>lTfgitp',
+									buttons: [
+										
+									],
+									language: {
+										processing:     "Ladataan...",
+										search:         "Haku",
+										lengthMenu:    	"Näytä _MENU_ kontaktia ",
+										info:           "Näytetään _START_ - _END_ / _TOTAL_ kontaktia",
+										infoEmpty:      "Näytetään 0 - 0 / 0 kontaktia",
+										infoFiltered:   "",
+										infoPostFix:    "",
+										loadingRecords: "Ladataan kontakteja...",
+										zeroRecords:    "Ei kontakteja",
+										emptyTable:     "Ei kontakteja",
+										paginate: {
+											first:      "Alkuun",
+											previous:   "Edellinen",
+											next:       "Seuraava",
+											last:       "Loppuun"
+										},
+										aria: {
+											sortAscending:  ": Järjestä nousevassa järjestyksessä",
+											sortDescending: ": Järjestä laskevassa järjestyksessä"
+										},
+										
+									},
+									"lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Kaikki"]],
+
+								}); 
+							});
+						});
+					};
+					reader.readAsBinaryString(f);
+				}
+			  });
+		}
+		fileInput.addEventListener('change', handleFile, false);
+		
+		$("#download-camp").on("click", function(e){
+			e.preventDefault()
+			var _self = this;
+			$(_self).find(".title").text(" Luodaan xml-tiedostoa...")
+			$(_self).addClass("disabled")
+			$(_self).find("i").removeClass("fa-download fa-fw").addClass("fa-spinner fa-pulse");
+			$.fileDownload($(this).attr("href")).done(function(){
+				
+				$(_self).find(".title").text("Lataa rekisteri")
+				$(_self).removeClass("disabled")
+				$(_self).find("i").addClass("fa-download fa-fw").removeClass("fa-spinner fa-pulse");
+			})
+			
+		});
+		

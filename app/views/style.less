@@ -1,0 +1,126 @@
+
+.transition (@prop: all, @time: 0.3s, @ease: ease-in-out) {
+    -webkit-transition: @prop @time @ease;
+    -moz-transition: @prop @time @ease;
+    -o-transition: @prop @time @ease;
+    -ms-transition: @prop @time @ease;
+    transition: @prop @time @ease;
+}
+
+.noselect {
+    -webkit-user-select: none; /* webkit (safari, chrome) browsers */
+    -moz-user-select: none; /* mozilla browsers */
+    -khtml-user-select: none; /* webkit (konqueror) browsers */
+    -ms-user-select: none; /* IE10+ */
+}
+
+.details {
+
+	label {
+		width:100%;
+	}
+}
+
+.dbConn {
+	&:after {
+			.transition;
+			font-family:"FontAwesome";
+			content: "\f0c7";
+			float:right;
+			font-size:1em;
+			display:block;
+			position:absolute;
+			right:0;
+			bottom:0;
+			font-weight:300;
+			background:#89B54A;
+			color:#fff;
+			padding:3px 10px;
+			opacity:0;
+			
+	}
+	
+	
+	&.saved {
+		&:after {
+			opacity:1;
+		}
+  
+	}
+}
+
+.btn {
+	&.btn-sm {
+		padding: 5px 10px;
+	}
+
+}
+
+.changeLink {
+	.noselect;
+	cursor:pointer;
+	&:hover {
+		text-decoration:underline;
+	}
+
+}
+
+.template {
+	display:none;
+}
+
+.loading {
+	.transition();
+	display:none;
+	
+}
+
+.daterangepicker td, .daterangepicker th {
+	border-radius:0;
+	
+
+}
+ .daterangepicker th {
+ 	border-radius:0 !important;
+	color:#fff;
+ }
+ .daterangepicker {
+	th.available{
+		&:hover {
+			background-color:darken(#30BBD0, 10%)  !important;
+		}
+	}
+ } 
+
+
+.predefinedDays{
+	padding-bottom:20px;
+	.nav {
+		& > .tab {
+			&:hover {
+			
+			}
+		}
+	}
+	.nav > .tab > a {
+	    margin-top: 20px;
+		font-size: 0.75em;
+
+	}
+}
+.page-title {
+
+    transition: height 0.1s;
+
+    position: fixed;
+    top: 0px;
+    left: 0;
+    z-index: 1000;
+    width: 100%;
+	height:50px;
+	&.expanded {
+		height:100px;
+	}
+}
+
+

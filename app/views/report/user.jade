@@ -1,0 +1,558 @@
+extends ../layout
+
+block content
+	#page-wrapper.gray-bg
+		.row.wrapper.border-bottom.white-bg.page-heading
+			h1
+				i.fa.fa-spinner.fa-pulse.fa-fw.page-title-icon
+				span.page-title= loadingText
+						
+		.wrapper-content
+			.row
+				#main-content.col-xs-12.gray-bg
+					.row
+						
+						.col-xs-12.animated.bounceInRight
+							.ibox
+								.ibox-content
+									ul#reports.list-unstyled
+										.toolbar-container.no-print
+											include tools/toolbar-new
+										h4.selectedUser(style='margin-top:10px')
+										include user-table
+									
+										
+block content-scripts
+
+	script(src="/js/jQuery.print.js")
+	script.
+		var rangeDays = {
+				'Muokattu': [moment().startOf("month"), moment().endOf("day")],
+				'Tänään': [moment().startOf("day"), moment().endOf("day")],
+				'Eilen': [moment().subtract(1, 'days').startOf("day"), moment().subtract(1, 'days').endOf("day")],
+				'Viimeiset 7 päivää': [moment().subtract(6, 'days').startOf("day"), moment()],
+				'Viimeiset 30 päivää': [moment().subtract(29, 'days').startOf("day"), moment()],
+				'Tämä kuukausi': [moment().startOf('month'), moment().endOf('day')],
+				'Edellinen kuukausi': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+		}
+		var origStart 		= rangeDays['Tänään'][0];
+		var origEnd			= rangeDays['Tänään'][1];
+		var reportType 		= "#{type}";
+		var hours 			= 0;
+		var money 			= 0;
+		var selectedUser 	= "*";
+		
+		$(document).ready(function(){
+			$("#printReport").on("click", function(){
+				$("#reports").print({
+					globalStyles: true,
+					mediaPrint: true,
+					stylesheet: null,
+					noPrintSelector: ".no-print",
+					iframe: true,
+					append: null,
+					prepend: null,
+					manuallyCopyFormValues: true,
+					deferred: $.Deferred(),
+					timeout: 250,
+					title: "Raportti",
+					doctype: '<!doctype html>'
+				});
+			});
+		});
+		
+		for(label in rangeDays) {
+			if(label == "Muokattu"){
+				$(".predefinedDays ul.nav").append($("<li role='presentation' data-label='"+label+"' class='tab' data-start='"+rangeDays[label][0]+"' data-end='"+rangeDays[label][1]+"' ><a href='#'>"+label+"</a></li>"))
+			}
+			else 
+				$(".predefinedDays ul.nav").append($("<li role='presentation' data-label='"+label+"' class='tab' data-start='"+rangeDays[label][0]+"' data-end='"+rangeDays[label][1]+"' ><a href='#'>"+label+"</a></li>"))
+		}
+		$(".predefinedDays li").first().next().addClass("active");
+	
+		// Varmasti on joku hianompi viritys olemassa?!
+		function calculateTotalsInTable($table, cb) {
+			hours = 0.00;
+			money = 0.00;
+			$table.find(".body-content tr").toArray().forEach(function(row){
+				$(row).find("td.calculate").toArray().forEach(function(cell){
+				
+					var c = cell.className.split(/\s+/)[0];
+				
+					if(c == "hours"){
+						var h = parseFloat($(cell).text()).toFixed(2);
+						
+						if(h > 0){
+							
+							hours += Number(h);
+						
+						}
+					}
+				
+					else {
+						
+						$table.find(".body-total ."+c).text(parseFloat(parseFloat($table.find(".body-total ."+c).text())+parseFloat($(cell).text())).toFixed(2))
+					}
+					
+				});
+	
+			})
+				
+			$table.find(".body-total .hours").text(parseFloat(hours).toFixed(2))
+	
+			if(cb)cb();
+		}
+		
+		function calculatePowersInTable($table, cb){
+			var totalContacts = parseInt($table.find(".body-total .calls.value").text());
+			$table.find(".body-total td.value").toArray().forEach(function(v){
+				var classList 	= v.className.split(/\s+/);
+				var val 		= parseFloat($(v).text());
+				
+				classList.forEach(function(c){
+					if(c != "value") {
+					
+						var v = parseFloat($table.find(".body-total ."+c).text());
+										
+						var type = $table.find(".body-power ."+c).data("type")
+											
+						switch(type) {
+							case '%':
+								var _val = parseFloat(val / totalContacts * 100).toFixed(2);
+								
+								if(!isNaN(_val)){
+									$table.find(".body-power ."+c).text(_val + " " + type)	
+							
+								} 
+								
+								
+							break;
+							case 'h':
+								if(val > 0){
+									
+									var _val = parseFloat( val / hours).toFixed(2)
+									if(!isNaN(_val))
+										$table.find(".body-power ."+c).text(_val + "/h")
+								}
+									
+								else 
+									$table.find(".body-power ."+c).text("0.00/h")
+							break;
+							case 'ho':
+								if(val > 0){
+								
+									var _val = parseFloat( totalContacts / val).toFixed(2)
+									if(!isNaN(_val))
+										$table.find(".body-power ."+c).text(_val + "/h")
+								}
+									
+								else 
+									$table.find(".body-power ."+c).text("0.00/h")
+							break;
+							case 'e':
+								var calls 	= parseInt($table.find(".body-total .calls").text());
+								var _val 	= parseFloat(  val  / calls ).toFixed(2);
+								if(!isNaN(_val))
+									$table.find(".body-power ."+c).text(_val + "/h")
+							break;
+							default:
+								
+							break;
+						}
+					}
+					
+				});
+				
+			})
+			if(cb)cb();
+		
+		}
+		
+		$(".tab").off("click").on("click", function(e){
+			e.preventDefault();
+			if(!$(this).hasClass("active")){
+				
+				$(".tab").removeClass("active");
+				$(this).addClass("active");
+				
+				$(".details .report-table").not(".template").remove()
+				var data = $(this).data();
+				if(data.label == "Muokattu"){
+					//$("#report-range .table").not(".template").remove();
+					$("input[name='daterange']").removeClass("hidden").css({"display":"inline-block"})
+				}
+				else {
+					$("input[name='daterange']").addClass("hidden")
+					origStart 	= moment(data.start);
+					origEnd		= moment(data.end);	
+					IOclient.emit("req.report.campaign.list", {			
+						start:	origStart.startOf("day").format("X"),
+						end:	origEnd.endOf("day").format("X"),
+					})
+				}
+			}
+			
+			
+		})
+		var showEmpty 	= false;
+		
+		$("#showEmpty").on("click", function(){
+			showEmpty = $(this).prop("checked");
+			$(".table-row.empty").toggleClass("hidden", !showEmpty);
+			$(".table-row.empty").toggleClass("visible", showEmpty);
+		});
+		 
+		$('input[name="daterange"]').daterangepicker({
+			locale: {
+			  "format": "DD.MM.YYYY",
+				"separator": " - ",
+				"applyLabel": "Hyväksy",
+				"cancelLabel": "Peruuta",
+				"fromLabel": "",
+				"toLabel": "",
+				"customRangeLabel": "Muokattu",
+				"weekLabel": "V",
+				"daysOfWeek": [
+					"Su",
+					"Ma",
+					"Ti",
+					"Ke",
+					"To",
+					"Pe",
+					"La"
+				],
+				"monthNames": [
+					"Tammikuu",
+					"Helmikuu",
+					"Maaliskuu",
+					"Huhtikuu",
+					"Toukoku",
+					"Kesäkuu",
+					"Heinäkuu",
+					"Elokuu",
+					"Syyskuu",
+					"Lokakuu",
+					"Marraskuu",
+					"Joulukuu"
+				],
+				"firstDay": 1
+			},
+			startDate: new Date(),
+			endDate: new Date(),
+			maxDate: new Date(),
+			linkedCalendars: true,
+		}, 
+		function(start, end, label) {
+			
+			origStart	= start;
+			origEnd		= end;	
+			
+			IOclient.emit("req.report.campaign.list", {			
+				start:		origStart.startOf("day").format("X"),
+				end:		origEnd.endOf("day").format("X"),
+			})
+			
+		});
+		
+		$("#showTotalsOnly").on("click", function(){
+			var hideBodys = $(this).is(":checked");
+			
+			if(hideBodys) $(".body-content").addClass("hidden")
+			else $(".body-content").removeClass("hidden")
+		});
+			
+		IOclient.once("joined", function(){
+			IOclient.emit("req.report.campaign.list", {			
+				start:		origStart.startOf("day").format("X"),
+				end:		origEnd.endOf("day").format("X"),
+			})
+		});
+		
+		var $treeChild 		= $(".treeview .child-template");
+		var $treeview 		= $(".treeview");
+		var reportData  	= {};
+		var selectedItems 	= {};
+		var separateUsers 	= false
+		
+		$("#separateUsers").on("click", function(){
+			separateUsers = $("#separateUsers").is(":checked")
+			updateReportTables();
+		});
+		
+		var $tableTemplate 	= $(".report-table.template");
+		
+		function updateReportTables(){
+			
+			$(".details .report-table").not(".template").remove()
+			$(".details .loading").fadeOut('fast');
+			var customerIDS = Object.keys(selectedItems);
+			if(customerIDS.length > 0) {
+				$(".details .no-reports").hide()
+			}else $(".details .no-reports").show()
+			
+			customerIDS.forEach(function(customer){
+				
+				var campaignIDS = Object.keys(selectedItems[customer]);
+				var $table 		= $tableTemplate.clone();
+				
+				$table.removeClass("template").css({display:""})
+				$table.find(".customer-name").text(reportData[customer].customer.nimi)
+				$table.appendTo($(".details"))
+				
+				campaignIDS.forEach(function(_c){
+					var _campaign 	= reportData[customer].campaigns[_c].campaign;
+					var _reports 	= reportData[customer].campaigns[_c].reports;
+
+					$tbl = $table.find(".table-responsive.temp").clone();
+					$tbl.removeClass("temp").css("display","");
+					$tbl.attr("id","table-campaign-"+_campaign._id)
+					$tbl.find(".campaign-nimi").text(_campaign.nimi)
+					
+					// Jos erilliset käyttäjät, käytetään uutta tablea vain templatena
+					if(!separateUsers)
+						$table.append($tbl)
+					
+					/* Luo tyhjät rowit tableen */
+					var days 	= origEnd.endOf("day").diff(origStart.startOf("day"), "days");
+					var start 	= moment(origStart.startOf("day"));
+					
+					
+					for(var d = 0; d < Math.abs(days)+1; d++) {
+						var $row = $tbl.find(".table-row.template").clone();
+						if(d != 0)
+							var date = start.add(1, "days").format("DD.MM.YYYY");
+						else
+							var date = start.format("DD.MM.YYYY")
+				
+						$row.attr("id", "day-"+d)
+						$row.attr("data-aikashort", date.toString());
+						$row.find(".pvm").text(date)
+						$tbl.find("tbody.body-content").prepend($row.removeClass("template").addClass("empty"));
+						
+						if(showEmpty)
+							$row.removeClass("hidden").addClass("visible")
+					}
+					
+					if(separateUsers){
+						
+						
+						_reports =_.groupBy(_reports, function(r){
+							return r.userID;
+						})
+						selectedItems[customer][_c].users.forEach(function(u){
+							
+							var $t 	= $tbl.clone();
+							var r 	= _reports[u];
+							
+							$t.attr("data-userID", r.userID)
+							if($t.find(".additional-info").text().length == 0)
+								$t.find(".additional-info").text(r[0].realUserName ||r[0].userName)
+							
+							r.forEach(function(_r){
+								createTableRow($t, _r)
+							});
+						
+							calculateTotalsInTable($t, function() {
+								calculatePowersInTable($t, function(){
+									
+								});
+							});
+							$table.append($t)
+						})				
+					
+					}
+					else {
+						
+						var _users = selectedItems[customer][_c].users;
+						var users = [];
+						_reports.forEach(function(r){
+							_users.forEach(function(_u){
+								if(r.userID == _u)
+									users.push(r.realUserName ||r.userName)
+							});
+						});
+						users = _.uniq(users)
+						$tbl.find(".additional-info").text(users.join(", "))
+						_reports.forEach(function(r){
+							
+							_users.forEach(function(_u){
+								if(_u == r.userID)
+									createTableRow($tbl, r)	
+							})
+							
+						});
+						calculateTotalsInTable($tbl, function() {
+							calculatePowersInTable($tbl, function(){
+								
+							});
+						});
+					}
+					$table.after().append($("<hr/><div class='page-break'></div>"))
+				});
+				
+			
+			});
+			$(".table-row.visible").each(function(index,row){
+				$(row).removeClass('odd');
+				if (index%2==1){ //odd row
+					$(row).addClass('odd');
+				}
+			})
+		}
+		
+		function createTableRow($table, entry){		
+		
+			$row = $table.find('.table-row[data-aikashort="'+entry.aikaShort+'"]');		
+			if($row.length > 0){
+				var totalStatuses = 0;
+				
+				for(status in entry.statuses) {
+					if(!Number.isNaN(parseInt(entry.statuses[status])))
+						totalStatuses += parseInt(entry.statuses[status]);
+				
+				}
+			
+				if(totalStatuses != 0) {
+					$row.removeClass("empty hidden").addClass("visible")
+					//if(showEmpty) $row.removeClass("hidden")
+				}
+
+				$row.find(".status-ok").text(parseInt($row.find(".status-ok").text())+parseInt(entry.statuses.ok));
+				$row.find(".status-ev").text(parseInt($row.find(".status-ev").text())+parseInt(entry.statuses.ev));
+				$row.find(".status-su").text(parseInt($row.find(".status-su").text())+parseInt(entry.statuses.su));
+				$row.find(".status-ei").text(parseInt($row.find(".status-ei").text())+parseInt(entry.statuses.ei));
+				$row.find(".status-tj").text(parseInt($row.find(".status-tj").text())+parseInt(entry.statuses.tj));
+				$row.find(".status-v").text(parseInt($row.find(".status-v").text())+parseInt(entry.statuses.v));
+				
+				$row.find(".calls").text(parseInt($row.find(".calls").text())+totalStatuses);
+				$row.find(".hours").text(parseFloat(parseFloat($row.find(".hours").text())+parseFloat(entry.tunnit)).toFixed(2));
+				$row.find(".provisio").text(parseFloat(parseFloat($row.find(".provisio").text())+parseFloat(entry.provisiopalkka ||0)).toFixed(2));
+				$row.find(".palkka_hourly").text(parseFloat(parseFloat($row.find(".palkka_hourly").text())+parseFloat(entry.tuntipalkka ||0)).toFixed(2));
+				$row.find(".money").text(parseFloat(parseFloat($row.find(".money").text())+parseFloat(entry.tuntipalkka || 0.00)+parseFloat(entry.provisiopalkka ||0)).toFixed(2));
+			}
+		}
+		
+		/* Luo treeview */
+		IOclient.on("report.campaign.list", function(_camps){
+			reportData = _camps;
+			$treeview.find(".node").remove();
+			
+			var $cs = $("#campSelect");
+			
+			var customers = Object.keys(_camps).sort();
+			var groups = {};
+			
+			customers.forEach(function(_cust){
+				var cust 	= _camps[_cust].customer;
+				var $cust 	= $treeChild.clone();
+				$cust.data("type", "customer");
+				$cust.data("id", cust._id)
+				$cust.removeClass("child-template hidden").addClass("node customer-node");
+				$cust.attr("id", "customer-"+cust._id)
+				$cust.find("input").first().attr("id", "input-"+cust._id )
+				$cust.find(".labeli").text(cust.nimi).attr("for", "input-"+cust._id )
+				var n = cust.nimi.replace(" ", "_");
+				groups[n] = $cust;
+				$treeview.append($cust);
+				
+				Object.keys(_camps[_cust].campaigns).forEach(function(_c){
+					var c = _camps[_cust].campaigns[_c].campaign
+					
+					var $grpItem 	= groups[n];
+					var $camp 		= $treeChild.find("li").clone();
+					$camp.data("type", "campaign")
+					$camp.data("id", c._id)
+					$camp.removeClass("child-template hidden").addClass("node campaign-node");
+					$camp.attr("id", "campaign-"+c._id)
+					$camp.find("input").first().attr("id", "input-"+c._id )
+					$camp.find(".labeli").text(c.nimi ||"Nimetön").attr("for", "input-"+c._id )
+					$grpItem.find(".child").first().append($camp)
+					
+					var reports = _.toArray(_.groupBy(_camps[_cust].campaigns[_c].reports, "userID"));
+										
+					reports.forEach(function(_r){
+						if(_r.length > 0){
+							var userID 		= _r[0].userID;
+							var userName 	= _r[0].realUserName || _r[0].userName;
+							var $user 		= $treeChild.find("li").clone();
+							
+							$user.data("type", "user")
+							$user.data("id", userID)
+							$user.removeClass("child-template hidden").addClass("node user-node");
+							$user.attr("id", "usr-"+userID)
+							$user.find("input").first().attr("id", "camp-"+c._id+"-input-"+userID )
+							$user.find(".labeli").text(userName||"Nimetön").attr("for", "camp-"+c._id+"-input-"+userID )
+							$camp.find(".child").first().append($user)
+						}
+							
+						
+					});
+									
+				});
+			});
+			removeEmptyCustomers()
+		});
+		
+		$(".treeview").delegate("label input:checkbox", "change", function() {
+			var $node 					= $(this).closest(".node"),
+			type 						= $node.data("type"),
+			id 							= $node.data("id"),
+			checkbox 					= $(this),
+			nestedList 					= checkbox.parent().next().next(),
+			selectNestedListCheckbox 	= nestedList.find("label:not([for]) input:checkbox");
+											
+			if(checkbox.is(":checked")) {
+				selectNestedListCheckbox.prop("checked", true);
+			}
+			else{
+				selectNestedListCheckbox.prop("checked", false);
+			}
+			selectedItems 	= {};
+			//console.log($(this).closest(".customer-node label input:checkbox"))
+			$(".treeview .customer-node label").find("input[type='checkbox']:checked").toArray().forEach(function(item){
+					
+				var customerID	= $(item).closest(".customer-node").data("id");
+				
+				selectedItems[customerID] = {};
+				var campArray = $(item).closest(".customer-node").find(".campaign-node label").find("input[type='checkbox']:checked").toArray()
+				if(campArray.length > 0){
+					campArray.forEach(function(camp){
+						var usrs 	= []
+						var campID 	= $(camp).closest(".campaign-node").data("id");
+						
+						$(camp).closest(".campaign-node").find(".user-node label").find("input[type='checkbox']:checked").toArray().forEach(function(_u){
+							
+							usrs.push($(_u).closest(".user-node").data("id"))
+						});
+						
+						if(usrs.length > 0){
+							usrs = _.toArray(_.uniq(usrs));
+							if(!selectedItems[customerID][campID])
+								selectedItems[customerID][campID] = {users:[]};
+							selectedItems[customerID][campID].users = usrs;
+						}
+						else {
+							if(selectedItems[customerID])							
+								delete selectedItems[customerID][campID]
+							if(selectedItems[customerID])
+								if(Object.keys(selectedItems[customerID]).length == 0)
+									delete selectedItems[customerID]
+						}
+					});
+				}
+				else {
+					delete selectedItems[customerID];
+				}
+			});
+			window.setTimeout(updateReportTables,0)
+		});
+		
+		function removeEmptyCustomers() {
+			var nodes = $(".treeview .customer-node").toArray();
+			nodes.forEach(function(node){
+				if($(node).find(".campaign-node").length == 0){
+					$(node).remove()
+				}	
+			});
+		}
+	

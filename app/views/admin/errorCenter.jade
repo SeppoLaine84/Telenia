@@ -1,0 +1,68 @@
+extends ../adminLayout
+block content
+	#page-wrapper.gray-bg
+			.row.wrapper.border-bottom.white-bg.page-heading
+				.col-xs-12
+					h1
+						i.fa.fa-spinner.fa-pulse.fa-fw.page-title-icon
+						span.page-title= loadingText
+			.wrapper-content: .row: #main-content.col-xs-12
+				.row: .col-xs-12#errorGrid
+					.jumbotron
+						h1 
+							i.fa.fa-fw.fa-thumbs-o-up.fa-lg.text-success
+							| Ei virheitä
+					.ibox.errorGrid.template.hidden
+						
+						.ibox-content
+							.row
+								.col-xs-12.col-md-4.col-lg-2
+									.row
+									.col-md-4.col-lg-4
+										i.fa.fa-5x.fa-bug.pull-left.text-danger
+									.col-md-6.col-lg-8
+										h2.error-count
+										small.text-bold.timestamps
+								.col-xs-12.col-md-2.col-lg-2
+									button.btn.btn-warning.btn-xs.setFixed
+										i.fa.fa-fw.fa-thumbs-o-up 
+										| Korjattu
+								.col-xs-12.col-md-6.col-lg-8
+									p.error-text.text-danger.bg-danger
+block content-scripts	
+	script.
+		IOclient.on("joined", function(){
+			IOclient.emit("req.admin.errorGrid.list")
+		});
+			
+		IOclient.on("admin.errorGrid.list", function(errors){
+			
+			var $template = $(".errorGrid.template");
+			var $grid = $("#errorGrid");
+			if(errors.length > 0){
+				$(".jumbotron").remove()
+				errors.reverse()
+				errors.forEach(function(error){
+					var $errDiv = $template.clone();
+					$errDiv.data("id", error._id)
+					$errDiv.find(".error-count").text(error.count)
+					$errDiv.find(".error-text").text(JSON.stringify(error.msg, null, 4))
+					$errDiv.removeClass("template hidden").appendTo($grid)
+					error.timestamps.forEach(function(time){
+						$errDiv.find(".timestamps").append($("<p>"+moment(time).format("DD.MM.YYYY HH:mm:ss")+"</p>"))
+						
+					});
+					$errDiv.find(".setFixed").on("click", function(){
+						
+						var id = $(this).closest(".errorGrid").data("id");
+						$(this).closest(".errorGrid").fadeOut('fast')
+						IOclient.emit("req.admin.errorGrid.fix", {_id: id})		
+						
+					});
+							
+					
+				});
+			}
+		});
+		
+	

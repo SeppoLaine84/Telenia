@@ -1,0 +1,452 @@
+extends ../../layout
+block content
+	#page-wrapper.gray-bg
+		.row.wrapper.border-bottom.white-bg.page-heading
+			h1
+				i.fa.fa-spinner.fa-pulse.fa-fw.page-title-icon
+				span.page-title= loadingText
+						
+		.wrapper-content
+			.row
+				#main-content.col-xs-12.gray-bg
+					.row.m-t-lg
+						.col-md-9.m-b-md
+							form#userInfo.form-horizontal(data-id='#{luser._id}')
+								.tabs-container
+									.tabs-left
+										
+											ul.nav.nav-tabs
+												li.active
+													a(data-toggle="tab" href="#tiedotTab" aria-expanded="true")
+														i.fa.fa-fw.fa-book
+														| Yhteystiedot
+												if(user.userlevel > 2)
+													li
+														a(data-toggle="tab" href="#palkkaTab" aria-expanded="false")
+															i.fa.fa-fw.fa-money
+															| Palkka
+												li
+													a(data-toggle="tab" href="#notifyTab" aria-expanded="false") 
+														i.fa.fa-fw.fa-bell
+														| Ilmoitukset
+												if(user._id == luser._id)
+													li
+														a(data-toggle="tab" href="#uiOptionsTab" aria-expanded="false") 
+															i.fa.fa-fw.fa-cogs
+															| Käyttöliittymä
+											.tab-content
+												//////////////////////////////////////////////////////
+												// Yhteystiedot TAB
+												//////////////////////////////////////////////////////
+												#tiedotTab.tab-pane.active
+													.panel-body
+														.col-xs-12
+															p Yhteystiedot
+																hr
+															.form-group
+																label.col-lg-3.control-label(for='yhteystiedot.nimi.etu') Etunimi
+																.col-lg-9: input.form-control(type='text' name='yhteystiedot.nimi.etu' value='#{luser.yhteystiedot.nimi.etu}' placeholder="Etunimi")
+															.form-group
+																label.col-lg-3.control-label(for='yhteystiedot.nimi.suku') Sukunimi
+																.col-lg-9: input.form-control(type='text' name='yhteystiedot.nimi.suku' value='#{luser.yhteystiedot.nimi.suku}' placeholder="Sukunimi")
+															.form-group
+																label.col-lg-3.control-label(for='email') Sähköposti
+																.col-lg-9: input.form-control(type='email' name='email' value='#{luser.email}' placeholder="Sähköposti")
+															.form-group
+																label.col-lg-3.control-label(for='puhelin') Puhelin
+																.col-lg-9: input.form-control(type='tel' name='yhteystiedot.puhelin' value='#{luser.yhteystiedot.puhelin}' placeholder="Puhelin")
+															.form-group
+																label.col-lg-3.control-label(for='yhteystiedot.osoite.katu') Katuosoite
+																.col-lg-9: input.form-control(type='text' name='yhteystiedot.osoite.katu' value='#{luser.yhteystiedot.osoite.katu}' placeholder="Katuosoite")
+															.form-group
+																label.col-lg-3.control-label(for='yhteystiedot.osoite.postinro') Postinumero
+																.col-lg-9: input.form-control(type='tel' name='yhteystiedot.osoite.postinro' value='#{luser.yhteystiedot.osoite.postinro}' placeholder="Postinumero")
+															.form-group
+																label.col-lg-3.control-label(for='yhteystiedot.osoite.kunta') Kunta
+																.col-lg-9: input.form-control(type='text' name='yhteystiedot.osoite.kunta' value='#{luser.yhteystiedot.osoite.kunta}' placeholder="Kunta")
+												//////////////////////////////////////////////////////
+												// Palkka TAB
+												//////////////////////////////////////////////////////
+												if(user.userlevel > 2)
+													#palkkaTab.tab-pane: .panel-body: .col-xs-12
+														p Palkka
+															hr
+														include tools/edit-palkka
+												
+												#notifyTab.tab-pane: .panel-body: .col-xs-12
+													p Sähköposti ilmoitukset
+														hr
+													.form-group
+														label.col-lg-3.control-label(for='notifySales') Ilmoita myynneistä sähköpostiin
+														.col-lg-9
+															.checkbox.checkbox-inline.checkbox-info
+																if(luser.notifySales === 1)
+																	input#notifySales(type='checkbox' name='notifySales' checked)
+																else
+																	input#notifySales(type='checkbox' name='notifySales')
+																label
+												if(user._id == luser._id)
+													#uiOptionsTab.tab-pane: .panel-body: .col-xs-12
+														h4 Etusivun asetukset
+															hr
+														if(luser.userlevel >= luser.uiOptions.etusivu.widgets.kuittausFeed.minUserlevel)
+															p
+																i.fa.fa-fw.fa-list 
+																|  Viimeisimmät kuittaukset
+															
+															.form-group
+																label.col-lg-3.control-label(for='uiOptions.etusivu.widgets.kuittausFeed.show') Näytä
+																.col-lg-9
+																	.checkbox.checkbox-inline.checkbox-info
+																		if(luser.uiOptions.etusivu.widgets.kuittausFeed.show === 1)
+																			input#showKuittausFeed(type='checkbox' name='uiOptions.etusivu.widgets.kuittausFeed.show' checked)
+																		else
+																			input#showKuittausFeed(type='checkbox' name='uiOptions.etusivu.widgets.kuittausFeed.show')
+																		label
+
+															hr
+														if(luser.userlevel >= luser.uiOptions.etusivu.widgets.timespanChart.minUserlevel)
+															p
+																i.fa.fa-fw.fa-line-chart
+																|  Myynnit ajankohdan mukaan
+																
+															.form-group
+																label.col-lg-3.control-label(for='uiOptions.etusivu.widgets.timespanChart.show') Näytä
+																.col-lg-9
+																	.checkbox.checkbox-inline.checkbox-info
+																		if(luser.uiOptions.etusivu.widgets.timespanChart.show === 1)
+																			input#showKuittausFeed(type='checkbox' name='uiOptions.etusivu.widgets.timespanChart.show' checked)
+																		else
+																			input#showKuittausFeed(type='checkbox' name='uiOptions.etusivu.widgets.timespanChart.show')
+																		label
+											
+															hr
+														if(luser.userlevel >= luser.uiOptions.etusivu.widgets.weeklyChart.minUserlevel)
+															p
+																i.fa.fa-fw.fa-bar-chart
+																|  Tämän viikon kuittaukset
+																
+															.form-group
+																label.col-lg-3.control-label(for='uiOptions.etusivu.widgets.weeklyChart.show') Näytä
+																.col-lg-9
+																	.checkbox.checkbox-inline.checkbox-info
+																		if(luser.uiOptions.etusivu.widgets.weeklyChart.show === 1)
+																			input#showKuittausFeed(type='checkbox' name='uiOptions.etusivu.widgets.weeklyChart.show' checked)
+																		else
+																			input#showKuittausFeed(type='checkbox' name='uiOptions.etusivu.widgets.weeklyChart.show')
+																		label
+												
+															hr
+														if(luser.userlevel >= luser.uiOptions.etusivu.widgets.weeklyUserChart.minUserlevel)
+															p
+																i.fa.fa-fw.fa-bar-chart
+																|  Käyttäjäkohtaiset kuittaukset kuluvalta viikolta
+															
+																
+															.form-group
+																label.col-lg-3.control-label(for='uiOptions.etusivu.widgets.weeklyUserChart.show') Näytä
+																.col-lg-9
+																	.checkbox.checkbox-inline.checkbox-info
+																		if(luser.uiOptions.etusivu.widgets.weeklyUserChart.show === 1)
+																			input#showKuittausFeed(type='checkbox' name='uiOptions.etusivu.widgets.weeklyUserChart.show' checked)
+																		else
+																			input#showKuittausFeed(type='checkbox' name='uiOptions.etusivu.widgets.weeklyUserChart.show')
+																		label
+															
+															
+															hr
+														if(luser.userlevel >= luser.uiOptions.etusivu.widgets.callProgressPie.minUserlevel)
+															p
+																i.fa.fa-fw.fa-pie-chart
+																|  Soittojen edistyminen
+															
+																
+															.form-group
+																label.col-lg-3.control-label(for='uiOptions.etusivu.widgets.callProgressPie.show') Näytä
+																.col-lg-9
+																	.checkbox.checkbox-inline.checkbox-info
+																		if(luser.uiOptions.etusivu.widgets.callProgressPie.show === 1)
+																			input#showKuittausFeed(type='checkbox' name='uiOptions.etusivu.widgets.callProgressPie.show' checked)
+																		else
+																			input#showKuittausFeed(type='checkbox' name='uiOptions.etusivu.widgets.callProgressPie.show')
+																		label
+															
+															
+															hr
+							
+						.col-md-3.animated.fadeInRight
+							
+							.ibox
+								.ibox-title
+									h4 Toiminnot
+								.ibox-content
+									.row: .col-xs-12
+										
+										button#changePwd.btn.btn-info(type='button' style='margin-left:8px')
+											i.fa.fa-fw.fa-unlock
+											| Vaihda salasana
+										if(user.userlevel > 2)
+											if(luser.aktiivinen === 1)
+												button#disableUser.btn.btn-warning(data-value='1' type='button' style='margin-left:8px')
+													i.fa.fa-fw.fa-pause
+													span.text Aseta passiiviseksi
+											else
+												button#disableUser.btn.btn-success(data-value='0' type='button' style='margin-left:8px')
+													i.fa.fa-fw.fa-play
+													span.text Aseta aktiiviseksi
+							.ibox
+								.ibox-content
+									.row: .col-xs-12
+										legend Viimeisimmät kuittaukset
+										- var n = 1
+										ul.list-unstyled
+											while n < Math.min(luser.raportti.kuittaukset.length, 6)
+												li: h4
+													.row: .col-xs-12
+														span.pull-left
+															span= luser.raportti.kuittaukset[luser.raportti.kuittaukset.length-n].aikaShort
+															|  
+															span= luser.raportti.kuittaukset[luser.raportti.kuittaukset.length-n].payloadName
+														span.pull-right.label.label-primary.label-status(style='margin-left:8px' class='bg-#{luser.raportti.kuittaukset[luser.raportti.kuittaukset.length-n].data} status-#{luser.raportti.kuittaukset[luser.raportti.kuittaukset.length-n].data}')= luser.raportti.kuittaukset[luser.raportti.kuittaukset.length-n].data
+												- n++
+							.ibox
+								.ibox-content
+									.row: .col-xs-12
+										legend Aktiiviset kampanjat
+										ul#activeCamps.list-unstyled
+											li.loading
+												h4 
+													i.fa.fa-fw.fa-spinner.fa-pulse
+													| Ladataan...
+							if(user.userlevel == 4)
+								.ibox
+									.ibox-content: .row: .col-xs-12: p= JSON.stringify(luser, null, 2)
+block content-scripts
+	script.
+		var user 	= !{JSON.stringify(user)};
+		var luser 	= !{JSON.stringify(luser)};
+		
+		var typingTimer;
+		
+		function ajaxSet(targetCollection, target, value, objectId, label){
+			$.ajax({
+				url:		"/"+targetCollection+"/set",
+				type:		"POST",
+				dataType:	"JSON",
+				data: {
+					target:	target,
+					value:	value,
+					id:		objectId, 
+					label:	label,
+				},
+				success: function(resp){
+					if(resp.status.ok > 0)
+						toastr['success']("Tieto vaihdettu onnistuneesti.", resp.origQuery.label);
+				},
+			})
+		}
+		
+		$("#userInfo input").on("input paste", function(e){
+			var _self = this;
+			if(typingTimer)clearTimeout(typingTimer)
+		
+			typingTimer = setTimeout(function(){
+				var label = $(_self).closest(".form-group").find("label").text();
+				ajaxSet("user", $(_self).attr("name"), $(_self).val(), luser._id, label)
+			}, 1500);
+		});
+		
+		$("#notifySales").on("click", function(){
+			var status 	= 0;
+			status 		= $(this).is(":checked") === false ? status : 1;
+			var name 	= $(this).attr("name");
+			
+			$.ajax({
+				url:		"/user/set",
+				type:		"POST",
+				dataType:	"JSON",
+				data: {
+					target: name,
+					value:	status,
+					id:		luser._id, 
+					label:	"",
+				},
+				success: function(resp){
+				
+				},
+			})
+		});
+		
+		$.ajax({
+			url:		"/campaign/names",
+			dataType:	"JSON",
+			type:		"POST",
+			data:{ 
+				userID: luser._id,
+			},
+			success: function(campNames) {
+				var _campNames = _.sortBy(campNames, function(item){
+					return item.camp.nimi;
+				});
+				var $campList = $("#activeCamps");
+				$campList.find(".loading").fadeOut('fast', function(){
+				
+					if(_campNames.length > 0){
+					
+						_campNames.forEach(function(camp){
+							$("<li><a href='/campaign/view/"+camp.camp._id+"'>"+camp.camp.nimi+" ("+camp.calls+")</a></li>").appendTo($campList)
+						});
+					}
+					else {
+						$campList.append($("<li><h4>Ei kampanjoita</h4></li>"))
+					}
+				})
+				
+			},
+		})
+		
+		
+		$("#changePwd").on("click", function(){
+		
+			swal({
+				title: "Salasanan vaihto",
+
+				type: "info",
+				html: "<label for='pwd'>Uusi salasana</label><input tabindex='1' class='form-control' type='password' name='pwd' id='cpwd' style='display:block'/><label for='pwd_valid'>Salasana uusiksi</label><input tabindex='2' id='cpwd1' class='form-control' type='password' name='pwd_valid' style='display:block'/>",
+				showCancelButton: 	true,
+				confirmButtonColor: "#DD6B55",
+				confirmButtonText: 	"Vaihda",
+				cancelButtonText: 	"Peruuta",
+			
+				}).then(function () {
+					
+					if($("#cpwd").val() == $("#cpwd1").val()){
+					
+						IOclient.emit("req.user.pwd.change", {id: luser._id, pwd: $("#cpwd").val()});
+						swal.close();
+						toastr['success']("Salasana vaihdettu onnistuneesti.", "Salasanan vaihto")
+					}else {
+						 swal({
+							type: 'error',
+							html: 'Salasanat eivät täsmää!',
+						}).then(function(){
+							$("#changePwd").click();
+						});
+						//swal.showInputError("Salasanat eivät täsmää!");
+						
+					}
+					
+				}, function(){
+					swal.close();
+				});
+			
+			
+		});
+		$("#uiOptionsTab input[type='checkbox']").on("click", function(){
+			var label 	= "Käyttöliittymän asetukset";
+			var val 	= $(this).is(":checked")? 1:0;
+			
+			$.ajax({
+				url:		"/user/set",
+				type:		"POST",
+				dataType:	"JSON",
+				data: {
+					target: $(this).attr("name"),
+					value:	val,
+					id:		luser._id, 
+					label:	label,
+				},
+				success: function(resp){
+				
+					if(resp.status.ok > 0)
+						toastr['success']("Tieto vaihdettu onnistuneesti.", resp.origQuery.label);
+				},
+			})
+		});
+		
+		$(".widgetPosition").on("change", function(e){
+			var val = $(this).val();
+			e.preventDefault();
+			var _self = this;
+			
+			if(val < 5){
+				
+				var oldVal = $(this).data("oldval")
+				$(this).data("oldval", val)
+				$(this).val(val);
+				$(".widgetPosition").not($(this)).toArray().forEach(function(elem){
+					
+					if($(elem).val() == val){
+						var _oldVal = $(elem).val()
+						$(elem).val(oldVal).data("oldval", _oldVal)
+						ajaxSet("user", $(elem).attr("name"), $(elem).val(), luser._id, "info")
+					}
+				});
+				
+			}
+			else {
+				//e.preventDefault();
+				
+			}
+			
+		});
+		
+			
+		
+		$("#disableUser").on("click", function(e){
+			var _self 	= this;
+			var val 	= Math.abs(parseInt(JSON.parse($(this).data("value")))-1);
+			
+			$(this).data("value", val);
+			$(this).toggleClass("btn-success btn-warning");
+			$(this).find(".fa").toggleClass("fa-play");
+			$(this).find(".fa").toggleClass("fa-pause");
+			if(val == 1) {
+				$(_self).find("span").text("Aseta passiiviseksi")
+			}
+			else {
+				$(_self).find("span").text("Aseta aktiiviseksi")
+			}
+			var label = "Käyttäjän aktivointi";
+			$.ajax({
+				url:		"/user/set",
+				type:		"POST",
+				dataType:	"JSON",
+				data: {
+					target: "aktiivinen",
+					value:	val,
+					id:		luser._id, 
+					label:	label,
+				},
+				success: function(resp){
+					if(resp.status.ok > 0)
+						toastr['success']("Tieto vaihdettu onnistuneesti.", resp.origQuery.label);
+				},
+			})
+		});
+	
+		
+		////////////////////////////////////////////
+		// 			Palkka asetukset
+		////////////////////////////////////////////
+		var palkkaTyyppi;
+		var firstTimeChange = true;
+		
+		$("#palkkaTyyppi").on("change", function(){
+			palkkaTyyppi = parseInt($(this).val());
+			$(".palkkaTyypiSelect").addClass("hidden");
+			$("#palkkaTyyppi-"+palkkaTyyppi).removeClass("hidden").addClass("active")
+			
+			if(firstTimeChange == true){ // Ei tallenneta uudestaan wanhaa tyyppiä
+				firstTimeChange = false;
+			}
+			else {
+				 ajaxSet("user", "palkka.palkkaTyyppi", palkkaTyyppi, luser._id, "Palkkatyyppi")
+			}
+		}).change();
+		
+		$(".provisioEnabled").on("click", function(){
+			var status 	= $(this).is(":checked");
+			$(".provisioEnabled").not($(this)).attr("checked", status);
+			 ajaxSet("user", "palkka.provisioEnabled", status, luser._id, "Provisio")
+		});

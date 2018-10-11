@@ -1,0 +1,76 @@
+extends ../../layout
+block content
+	#page-wrapper.gray-bg
+		.row.wrapper.border-bottom.white-bg.page-heading
+			h1
+				i.fa.fa-spinner.fa-pulse.fa-fw.page-title-icon
+				span.page-title= loadingText
+						
+		.wrapper-content
+			.row
+				#main-content.col-xs-12.gray-bg
+					.row
+						.col-xs-12.animated.bounceInRight
+							.ibox
+								.ibox-content
+									form#newCustomer.form-horizontal(autocomplete='off')
+									
+										legend
+											i.fa.fa-fw.fa-edit
+											| Asiakkaan tiedot
+										.form-group
+											label.col-lg-3.control-label(for='nimi') Nimi*
+											.col-lg-9: input.form-control(type='text' name='nimi' required aria-required="true"   placeholder="Asiakkaan nimi" )
+										.form-group
+											label.col-lg-3.control-label(for='vat') Y-Tunnus
+											.col-lg-9: input.form-control(type='text' name='vat' placeholder="Y-Tunnus")
+										
+										.form-group
+											label.col-lg-3.control-label(for='yhteystiedot.nimi') Yhteyshenkilön nimi
+											.col-lg-9: input.form-control(type='text' name='yhteystiedot.nimi' placeholder="Yhteyshenkilön nimi" )
+										.form-group
+											label.col-lg-3.control-label(for='yhteystiedot.email') Sähköposti
+											.col-lg-9: input.form-control(type='email' name='yhteystiedot.email' placeholder="Sähköposti" )
+										.form-group
+											label.col-lg-3.control-label(for='puhelin') Puhelin
+											.col-lg-9: input.form-control(type='tel' name='yhteystiedot.puhelin'  placeholder="Puhelin")
+										.form-group
+											label.col-lg-3.control-label(for='yhteystiedot.osoite.katu') Katuosoite
+											.col-lg-9: input.form-control(type='text' name='yhteystiedot.osoite.katu'  placeholder="Katuosoite")
+										.form-group
+											label.col-lg-3.control-label(for='yhteystiedot.osoite.postinro') Postinumero
+											.col-lg-9: input.form-control(type='tel' name='yhteystiedot.osoite.postinro'  placeholder="Postinumero")
+										.form-group
+											label.col-lg-3.control-label(for='yhteystiedot.osoite.kunta') Kunta
+											.col-lg-9: input.form-control(type='text' name='yhteystiedot.osoite.kunta' placeholder="Kunta")
+										.form-group
+											.col-lg-3
+											.col-lg-9: small.text-danger *Tähdellä merkityt kentät ovat pakollisia.									
+								.ibox-footer
+									.row: .col-xs-12
+										button#saveCsr.btn.btn-info.pull-right(type='submit' form='newCustomer' style='margin-left:8px')
+											i.fa.fa-fw.fa-save
+											| Luo asiakas
+										
+block content-scripts
+	script.
+		var user 	= !{JSON.stringify(user)};
+		$("#newCustomer").validate({		
+			rules: {
+				'nimi': "required",
+			},		
+			messages: {	'nimi': { required: "Asiakkaan nimi on pakollinen",	},
+			
+			},
+			submitHandler: function(form){				
+				var data = $(form).serializeArray();				
+				var d = {};
+				data.forEach(function(_d){
+					if(_d.value.length > 0)
+						d[_d.name] = _d.value;
+				});			
+				form.reset();
+				IOclient.emit("req.customer.add", d);
+			},
+			
+		});

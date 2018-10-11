@@ -1,0 +1,55 @@
+li
+	button.expand: span
+	.short-details
+		h3= user.email
+		span= userlevelStrings[user.userlevel]
+	form.details.row(data-id='#{user._id}' method="POST" action="/user/save") 
+		input#uid(type="hidden" name="_id" value='#{user._id}')
+		.col-lg-6
+			h4 Yhteystiedot
+			label(for='yhteystiedot.nimi.etu') Etunimi
+			input.form-control(type='text' id='yhteystiedot.nimi.etu' name='yhteystiedot.nimi.etu' value='#{user.yhteystiedot.nimi.etu}')
+			label(for='yhteystiedot.nimi.suku') Sukunimi
+			input.form-control(type='text' id='yhteystiedot.nimi.suku'  name='yhteystiedot.nimi.suku' value='#{user.yhteystiedot.nimi.suku}')
+			label(for='yhteystiedot.puhelin') Puhelin
+			input.form-control(type='tel' id='yhteystiedot.puhelin' name='yhteystiedot.puhelin' value='#{user.yhteystiedot.puhelin}')
+			label(for='yhteystiedot.osoite.katu') Katuosoite
+			input.form-control(type='text' id='yhteystiedot.osoite.katu'  name='yhteystiedot.osoite.katu' value='#{user.yhteystiedot.osoite.katu}')
+			label(for='yhteystiedot.osoite.postinro') Postinumero
+			if(user.yhteystiedot.osoite.postinro == 0)
+				input.form-control(type='text' id='yhteystiedot.osoite.postinro'  name='yhteystiedot.osoite.postinro' value='')
+			else
+				input.form-control(type='text' id='yhteystiedot.osoite.postinro'  name='yhteystiedot.osoite.postinro' value='#{user.yhteystiedot.osoite.postinro}')
+			label(for='yhteystiedot.osoite.kunta') Postitoimipaikka
+			input.form-control(type='text' id='yhteystiedot.osoite.kunta' name='yhteystiedot.osoite.kunta' value='#{user.yhteystiedot.osoite.kunta}')
+				
+		.col-lg-6
+			h4 Kirjautumistiedot
+			label(for='email') Sähköposti
+			input.form-control(type='email' id='email' name='email' value='#{user.email}')
+			label(for='pwd') Salasana
+			input.form-control(type='password' id='pwd' name='pwd' value='#{user.pwd}')
+			label(for='ulvl-select') Rooli
+			select(name='userlevel').form-control
+				each uls, index in userlevelStrings
+					if(index > 0)
+						if(index == user.userlevel)
+							option(name='ulvl' type="number" value='#{index}' selected)= uls
+						else
+							option(name='ulvl' type="number" value='#{index}')= uls
+			hr
+			h4 Palkka
+			label(for='palkka.kuukausipalkka') Kuukausipalkka
+			input.form-control(type='tel' id='palkka.kuukausipalkka' name='palkka.kuukausipalkka' value='#{user.palkka.kuukausipalkka}')
+			label(for='palkka.provisiopalkka') Provisiopalkka
+			input.form-control(type='tel' id='palkka.provisiopalkka' name='palkka.provisiopalkka' value='#{user.palkka.provisiopalkka}')
+			label(for='palkka.bonus') Bonus
+			input.form-control(type='tel' id='palkka.bonus' name='palkka.bonus' value='#{user.palkka.bonus}')
+			hr/
+			button.submit.save-user(role="button")
+				i.fa.fa-pencil
+				|  Päivitä tiedot
+			hr/
+			button.submit.red.remove-user(role="button")
+				i.fa.fa-trash
+				|  Poista käyttäjä

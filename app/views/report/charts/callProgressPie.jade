@@ -1,0 +1,12 @@
+if(page == "etusivu")
+	.chartWidget.widgetti#callProgressPieWidget.hidden.fadeInDown
+		
+			h4 Soittojen edistyminen ja jäljellä olevat soitot
+			p Sinulla on soittoja 
+				strong.campaignCount 0
+				|  eri kampanjasta.
+			.row.text-left
+				.col-md-6
+					canvas#callProgressPieChart(height="150")
+				.col-md-6
+					canvas#callProgressPieChart1(height="150")

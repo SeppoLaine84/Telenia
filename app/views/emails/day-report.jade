@@ -1,0 +1,28 @@
+doctype html(lang='fi')
+head
+	title Telenia.fi -  Päivittäinen raportti
+	meta(charset='utf-8')
+	meta(name='viewport', content='width=device-width,initial-scale=1')
+	style
+		include email.css
+
+body
+	.container
+		each sale in sales
+			h2 Myynti kampanjassa: #{sale.kampanjanNimi}
+				if(sale.payloadID)
+					a(href="https://www.telenia.fi/aloitus/?pl=#{sale.payloadID}") Linkki kohteeseen
+					br
+				br
+				small= "Asiakas: "+ sale.asiakas
+				br
+				small= "Myyjä: "+sale.user
+			.well
+				h3 Tiedot
+				each pl in sale.data.payload
+					p
+						span= pl.name+ " "
+						br
+						strong= pl.value
+				pre= sale.data.report
+		small Linkit asiakkaisiin toimivat toistaiseksi vain kirjautuneena Teleniaan.

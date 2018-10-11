@@ -1,0 +1,49 @@
+.form-group
+	label.col-lg-3.control-label(for='palkkaTyyppi') Palkkatyyppi
+		span.text-danger *
+	.col-lg-9
+		select#palkkaTyyppi.form-control(name='palkkaTyyppi' )
+			option(value=0 disabled="disabled" selected) Valitse palkkatyyppi
+			option(value=1) Tuntipalkka
+			option(value=2) Kk-palkka
+#palkkaTyyppi-1.hidden.palkkaTyypiSelect
+	.form-group
+		label.col-lg-3.control-label(for='palkka.tuntipalkka') Tuntipalkka
+			span.text-danger *
+		.col-lg-9
+			.input-group
+				.input-group-addon
+					i.fa.fa-fw.fa-euro
+				input.form-control.palkkaValue(type='tel' name='palkka.tuntipalkka'  placeholder="Tuntipalkka" )
+			span.error.text-error
+	.form-group			
+		label.col-lg-3.control-label(for='palkka.tuntipalkka') Provisio
+			br
+			small.hint huom. Provisio määräytyy kampanja kohtaisesti.
+		.col-lg-9
+			.checkbox
+				input.provisioEnabled(type="checkbox" name="provisioEnabled")
+				label(for="provisioEnabled")
+			
+#palkkaTyyppi-2.hidden.palkkaTyypiSelect
+	.form-group
+		label.col-lg-3.control-label(for='palkka.kuukausipalkka') Kuukausipalkka
+			span.text-danger *
+			small (0.00)
+		.col-lg-9
+			.input-group
+				.input-group-addon
+					i.fa.fa-fw.fa-euro
+				input.form-control.palkkaValue(type='tel' name='palkka.kuukausipalkka'  placeholder="Kuukausipalkka" )
+			span.error.text-error
+	.form-group			
+		label.col-lg-3.control-label(for='palkka.tuntipalkka') Provisio
+			br
+			small.hint huom. Provision määrä asetetaan kampanja kohtaisesti.
+		.col-lg-9
+			.checkbox
+				input.provisioEnabled(type="checkbox" name="provisioEnabled")
+				label(for="provisioEnabled")
+	
+hr
+			

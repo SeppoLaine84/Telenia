@@ -1,0 +1,31 @@
+.widgetti#statListWidget.hidden
+	h2 Tervetuloa #{user.yhteystiedot.nimi.etu}
+	small Sinulla on 
+		strong.new-notify-count
+		|  lukematonta viestiä
+	ul.list-group.clear-list.m-t
+		li.list-group-item.fist-item
+			#ok-status-widget.float-e-margins.animated.fadeInDown
+				span.pull-right
+					span.count
+						i.fa.fa-spinner.fa-pulse
+					|  (
+					small.lastCount
+					| )
+				span.label.label-primary
+					i.fa.fa-bolt
+				| Myynnit
+		li.list-group-item
+			#total-status-widget.float-e-margins.animated.fadeInDown
+				span.count.pull-right
+					i.fa.fa-spinner.fa-pulse
+				span.label.label-success
+					i.fa.fa-book
+				| Kuittaukset		
+		li.list-group-item
+			#unregistered-statuses-widget.float-e-margins.animated.fadeInDown
+				span.count.pull-right
+					i.fa.fa-spinner.fa-pulse
+				span.label.label-info
+					i.fa.fa-edit
+				| Kirjaamattomat kuittaukset	

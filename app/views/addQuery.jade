@@ -1,0 +1,44 @@
+script.
+	var addQuery 	= !{JSON.stringify(addQuery)}
+				
+	if(addQuery){
+		console.log(addQuery)
+
+		if(addQuery.error == true){
+			swal({
+				title: addQuery.title,
+				html:addQuery.data,
+				type: "error",
+				showCancelButton: false,
+				confirmButtonColor: "#89b54a",
+				confirmButtonText: "OK",
+			}).done();
+		}
+		else {
+			if(addQuery.type == "payload"){
+				viewPayload(addQuery.data.ord, addQuery.data.payload.payload)
+			}
+			
+		}
+				
+		
+		/*
+		swal({
+			title: "Uloskirjautuminen",
+			text: "Haluatko raportoida päivän?",
+			type: "info",
+			showCancelButton: true,
+			confirmButtonColor: "#89b54a",
+			confirmButtonText: "Kyllä, raportoi",
+			cancelButtonText: "Ei, kirjaudu ulos",
+			closeOnConfirm: false,
+			
+		}).then(function () {
+			document.location = $(_self).find("a").attr("href")
+		
+		}, function(dismiss){
+				document.location ="/user/logout";	
+		});
+		*/
+		
+	}

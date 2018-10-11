@@ -1,0 +1,113 @@
+doctype html(lang='fi')
+head
+	title= appSettings.name
+	meta(charset='utf-8')
+	meta(name='viewport', content='width=device-width,initial-scale=1')
+	link(rel='icon', href='/favicon.ico')
+	
+	include styles
+	
+	//if lt IE 9
+	script(src='/js/html5shiv.js')
+	script(src='/js/respond.min.js')
+body.fixed-sidebar.white-bg.bg-logo
+	
+	#wrapper
+		if(user)
+			if(user.userlevel <= 3)
+				include uudet/sidebar
+			else
+				include admin/sidebar
+		
+		div#overlay
+		//include lockscreen
+		div#connLost.overlay(style="display:none;position:fixed;width:100%;height:100%;left:0;top:0;z-index:50000")
+			.overlay-content
+				h1.text-center
+					i.fa.fa-3x.fa-warning.text-danger
+					br
+					|  Yhteys palvelimeen on katkennut...
+					br
+					small Odota hetki niin yhteyden pitäisi palata.
+		block login
+	
+		block content
+				
+		include scripts
+		script.
+			toastr.options = {
+				"closeButton": false,
+				"debug": false,
+				"newestOnTop": true,
+				"progressBar": false,
+				"positionClass": "toast-top-right",
+				"preventDuplicates":false,
+				"onclick": null,
+				"showDuration": "300",
+				"hideDuration": "1000",
+				"timeOut": "5000",
+				"extendedTimeOut": "1000",
+				"showEasing": "swing",
+				"hideEasing": "linear",
+				"showMethod": "fadeIn",
+				"hideMethod": "fadeOut"
+			}
+		
+		include engineScript
+
+		block engine-scripts
+			if(user)
+				script.
+					$.fn.collapse.Constructor.TRANSITION_DURATION = 0;
+					
+					var userlevel 	= #{user.userlevel};
+					if(userlevel > 1)
+						updateCalllistMenu(function(){
+							updateCampMenu(function(){
+								navFix()
+								$(".mainmenu").removeClass("hidden").addClass("fadeInLeft")
+							});
+						});
+					else
+						updateCalllistMenu(function(){
+							navFix()
+							$(".mainmenu").removeClass("hidden").addClass("fadeInLeft")
+						});
+					$(".page-title-icon").removeClass().addClass("page-title-icon fa fa-fw fa-#{pageIcon}");
+					$(".page-title").text("#{pageTitle}");
+		
+					
+					document.title 		= "#{appSettings.name} - #{pageTitle}";
+					$(".signoff").on("click", function(e){
+						var _self = this;
+						e.preventDefault();
+						swal({
+							title: "Uloskirjautuminen",
+							text: "Haluatko raportoida päivän?",
+							type: "info",
+							showCancelButton: true,
+							confirmButtonColor: "#89b54a",
+							confirmButtonText: "Kyllä, raportoi",
+							cancelButtonText: "Ei, kirjaudu ulos",
+							closeOnConfirm: false,
+							
+							}).then(function () {
+								
+								document.location = $(_self).find("a").attr("href")
+							
+							}, function(dismiss){
+								document.location ="/user/logout";	
+							});
+					});
+					
+					
+					
+				include uudet/socket-script
+				
+				
+				//include scripts/lockscreen-script
+					
+		block widget-scripts
+		block content-scripts
+		if(addQuery)
+			include addQuery

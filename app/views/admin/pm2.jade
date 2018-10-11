@@ -1,0 +1,120 @@
+extends ../layout
+block content
+	#page-wrapper.gray-bg
+			.row.wrapper.border-bottom.white-bg.page-heading
+				.col-xs-12
+					h1
+						i.fa.fa-spinner.fa-pulse.fa-fw.page-title-icon
+						span.page-title= loadingText
+			.wrapper-content: .row: #main-content.col-xs-12
+				
+block content-scripts	
+	script.
+		var IOclient 		= io.connect("//#{appSettings.domain}:#{appSettings.port}", {secure:true});
+		var connectionLost 	= false;
+		
+		toastr.options = {
+			"closeButton": false,
+			"debug": false,
+			"newestOnTop": true,
+			"progressBar": false,
+			"positionClass": "toast-top-right",
+			"preventDuplicates":false,
+			"onclick": null,
+			"showDuration": "300",
+			"hideDuration": "1000",
+			"timeOut": "5000",
+			"extendedTimeOut": "1000",
+			"showEasing": "swing",
+			"hideEasing": "linear",
+			"showMethod": "fadeIn",
+			"hideMethod": "fadeOut",
+			"target": "body",
+		}
+
+		
+		IOclient.on('disconnect', function (err) {
+			connectionLost = true;
+			$("#connLost").fadeIn();
+		});
+		
+		var IOuser;
+		var IOuserlist;
+		
+		IOclient.on("connect", function(){
+			connectionLost 	= false;
+			$("#connLost").fadeOut();
+
+
+			//var username 	= "#{user.email}";
+			//console.log(username+" connected to IO")
+			IOclient.emit("LOGIN", "superadmin");
+			
+		});
+		
+		IOclient.on("USERINFO", function(_user){
+			IOuser = _user;
+			IOclient.emit('join', _user.clientID);
+			//IOclient.emit("MSG", "test");
+		});
+		
+		IOclient.on("MSG", function(msg){
+		
+		});
+		
+		IOclient.on("USERJOIN", function(_user){
+		//	var usr = createUserElement(_user);
+			//updateUserlistStatus("#onlineUsers .badge");
+		});
+		
+		IOclient.on("USERLEFT", function(_user){
+			//$(".user[data-id='"+_user+"']").remove();
+			//updateUserlistStatus("#onlineUsers .badge");
+		});
+		
+		IOclient.on("USERS", function(_userlist){
+			/*
+			if(_userlist.users.length > 1){
+				$(".userlist .user-container").empty();
+				_userlist.users.forEach(function(_user){
+					
+					var usr = createUserElement(_user);
+					
+					
+				});
+			}
+			*/
+			//updateUserlistStatus("#onlineUsers .badge");
+		});
+	
+		
+		// Serveri l‰hett‰‰ notifyn userille
+		IOclient.on("NOTIFY", function(notify){
+			if($("#note_"+notify._id).length== 0){
+				var $note 		= $("<div id='note_"+notify._id+"' data-id='"+notify._id+"' class='note "+(notify.tyyppi || "info") +"'><span class='time'>"+moment(notify.aika).format("DD.MM.YYYY HH:mm")+"</span><h4>"+notify.otsikko+"</h4><p>"+notify.sisalto+"</p></div>")
+				var $kuittaa 	= $("<button class='close'>Kuittaa luetuksi</button>");
+				
+				if(notify.eiLuettu == true) 
+					$note.addClass("unread");
+				
+				if(notify.eiNahty === true){
+					$note.addClass("unseen");
+					toastr[notify.tyyppi](notify.sisalto,notify.otsikko);
+				}
+				
+				$note.append($kuittaa);
+				$note.prependTo($(".notifys"));
+				$kuittaa.on("click", function(){
+					var $n = $(this).closest(".note");
+					
+					updateNotifyToRead($n.data("id"));
+					
+					$n.fadeOut(function(){
+						$(this).remove();
+						updateNotifyCounter();
+					});
+				});
+				updateNotifyCounter();
+			}
+			
+		});
